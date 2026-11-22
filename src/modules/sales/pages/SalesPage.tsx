@@ -355,14 +355,12 @@ export default function SalesPage() {
   ];
 
   const handleOrderStatusBarClick = (item: { name: string; value?: number }) => {
-    const statusMap: Record<string, string> = {
-      Quotations: "quotations",
-      "New Orders": "new_orders",
-      Ongoing: "ongoing"
-    };
-    const key = statusMap[item.name];
-    if (key) {
-      router.push(`/sales/order-status?status=${key}`);
+    if (item.name === "Quotations") {
+      router.push("/sales/list-quotation?from=overview");
+    } else if (item.name === "New Orders") {
+      router.push("/sales/orders?order_status=Confirmed&from=overview");
+    } else if (item.name === "Ongoing") {
+      router.push("/sales/orders?order_status=Ongoing&from=overview");
     }
   };
 
@@ -505,7 +503,7 @@ export default function SalesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Card 1: Quotations to Follow-up */}
         <div
-          onClick={() => router.push("/sales/list-quotation")}
+          onClick={() => router.push("/sales/list-quotation?from=overview")}
           className="bg-white border border-amber-200 hover:border-amber-400 rounded-xl p-3 shadow-3xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between group"
         >
           <div className="min-w-0">
@@ -774,9 +772,9 @@ export default function SalesPage() {
                   {/* Stage Funnel Bar */}
                   <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100 text-center">
                     {[
-                      { label: "Quotations", count: quotationsVal, color: "text-indigo-600", link: "/sales/order-status?status=quotations" },
-                      { label: "New Orders", count: newOrdersVal, color: "text-blue-600", link: "/sales/order-status?status=new_orders" },
-                      { label: "Ongoing", count: ongoingOrdersVal, color: "text-cyan-600", link: "/sales/order-status?status=ongoing" },
+                      { label: "Quotations", count: quotationsVal, color: "text-indigo-600", link: "/sales/list-quotation?from=overview" },
+                      { label: "New Orders", count: newOrdersVal, color: "text-blue-600", link: "/sales/orders?order_status=Confirmed&from=overview" },
+                      { label: "Ongoing", count: ongoingOrdersVal, color: "text-cyan-600", link: "/sales/orders?order_status=Ongoing&from=overview" },
                     ].map((s) => (
                       <button
                         key={s.label}

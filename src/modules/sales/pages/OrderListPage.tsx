@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Eye, Edit2, X } from "lucide-react";
-import Button from "@/components/ui/Button";
+import { Plus, Eye, Edit2, X, ArrowLeft } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import { OrderItemResponse, SalesOrderStatusData } from "../types";
 import { getOrdersList } from "../services/order.service";
@@ -24,9 +23,17 @@ import { formatDateStyle } from "@/lib/formatDate";
 function OrderListContent() {
   const { selectedCategory } = useSalesStore();
   const searchParams = useSearchParams();
+  const normalizeOrderStatus = (val: string) => {
+    const s = val.toLowerCase().trim();
+    if (s === "new_orders" || s === "new" || s === "confirmed") return "Confirmed";
+    if (s === "ongoing") return "Ongoing";
+    return val;
+  };
+  const fromOverview = searchParams.get("from") === "overview";
   const initialCompletionDate = searchParams.get("completion_date") || "";
   const initialCommitDate = searchParams.get("commit_date") || "";
-  const initialOrderStatus = searchParams.get("order_status") || "";
+  const rawInitialStatus = searchParams.get("order_status") || searchParams.get("status") || searchParams.get("filter") || "";
+  const initialOrderStatus = normalizeOrderStatus(rawInitialStatus);
   const initialPaymentStatus = searchParams.get("payment_status") || "";
 
   const [orders, setOrders] = useState<OrderItemResponse[]>([]);
@@ -87,10 +94,13 @@ useEffect(() => {
   const isOngoing = ongoingStatuses.includes(orderStatus);
 
   useEffect(() => {
-    const qOrderStatus = searchParams.get("order_status") || searchParams.get("status") || searchParams.get("filter");
-    if (qOrderStatus && qOrderStatus !== orderStatus) {
-      setOrderStatus(qOrderStatus);
-      setCurrentPage(1);
+    const rawOrderStatus = searchParams.get("order_status") || searchParams.get("status") || searchParams.get("filter");
+    if (rawOrderStatus) {
+      const normalized = normalizeOrderStatus(rawOrderStatus);
+      if (normalized !== orderStatus) {
+        setOrderStatus(normalized);
+        setCurrentPage(1);
+      }
     }
     const qCompletionDate = searchParams.get("completion_date");
     if (qCompletionDate !== null && qCompletionDate !== completionDate) {
@@ -375,21 +385,29 @@ useEffect(() => {
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.headerRow}>
-        <div>
-          <h1 className={styles.title}>Sales Orders</h1>
-          <p className={styles.subtitle}>
-            Manage active orders, payment statuses and production workflow routes.
-          </p>
+        <div className="flex items-center gap-3">
+          {fromOverview && (
+            <Link
+              href="/sales"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-3xs cursor-pointer shrink-0"
+              title="Return to Sales Overview"
+            >
+              <ArrowLeft size={14} /> Back to Overview
+            </Link>
+          )}
+          <div>
+            <h1 className={styles.title}>Sales Orders</h1>
+            <p className={styles.subtitle}>
+              Manage active orders, payment statuses and production workflow routes.
+            </p>
+          </div>
         </div>
-        <Link href="/sales/orders/create" passHref legacyBehavior>
-          <Button
-            variant="primary"
-            size="sm"
-            className="flex items-center gap-1.5 cursor-pointer font-bold"
-            onClick={() => useSidebarStore.getState().setCollapsed(true)}
-          >
-            <Plus size={16} /> New Sales Order
-          </Button>
+        <Link
+          href="/sales/orders/create"
+          onClick={() => useSidebarStore.getState().setCollapsed(true)}
+          className="inline-flex items-center justify-center font-bold rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 h-9 px-3 text-xs gap-1.5 cursor-pointer shadow-3xs"
+        >
+          <Plus size={16} /> New Sales Order
         </Link>
       </div>
 
@@ -412,6 +430,7 @@ useEffect(() => {
         setCommitToDate={handleCommitToDate}
         completionDate={completionDate}
         setCompletionDate={handleCompletionDate}
+        kpiData={kpiData}
       />
 
       {/* Orders Table */}
@@ -542,13 +561,12 @@ useEffect(() => {
                                   <div className="flex items-center justify-center gap-1.5">
                                     {/* 🌟 Flow 2: Edit Normal Order Button (Only editable if order_number is null) */}
                                     {!order.order_number && (
-                                      <Link href={`/sales/create-order?order_id=${order.id}`} passHref legacyBehavior>
-                                        <button
-                                          className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 rounded-lg cursor-pointer transition-colors"
-                                          title="Edit Sales Order"
-                                        >
-                                          <Edit2 size={13} />
-                                        </button>
+                                      <Link
+                                        href={`/sales/create-order?order_id=${order.id}`}
+                                        className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 rounded-lg cursor-pointer transition-colors inline-flex items-center justify-center"
+                                        title="Edit Sales Order"
+                                      >
+                                        <Edit2 size={13} />
                                       </Link>
                                     )}
 

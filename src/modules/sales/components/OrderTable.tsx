@@ -145,10 +145,12 @@ export default function OrderTable({
                                     <Eye size={13} />
                                   </button>
                                   {!isProject && (
-                                    <Link href={`/sales/orders/edit/${order.id}`} passHref legacyBehavior>
-                                      <button className={styles.actionBtn} title="Edit Order">
-                                        <Edit2 size={13} />
-                                      </button>
+                                    <Link
+                                      href={`/sales/orders/edit/${order.id}`}
+                                      className={styles.actionBtn}
+                                      title="Edit Order"
+                                    >
+                                      <Edit2 size={13} />
                                     </Link>
                                   )}
                                 </div>

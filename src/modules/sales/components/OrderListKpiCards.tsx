@@ -1,13 +1,12 @@
 // src/modules/sales/components/OrderListKpiCards.tsx
 
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import {
     ShoppingCart,
     Sparkles,
     Activity,
     AlertCircle,
     RefreshCw,
-    ChevronDown
 } from "lucide-react";
 import { SalesOrderStatusData } from "../types";
 
@@ -26,28 +25,10 @@ export default function OrderListKpiCards({
     onRetry,
     onSelectStatus,
 }: OrderListKpiCardsProps) {
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setDropdownOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
     // Extract values with safe fallback options
     const total = data?.total_orders ?? 0;
     const newOrders = data?.new_orders ?? 0;
     const ongoingOrders = data?.ongoing_orders ?? 0;
-
-    const inProgress = data?.in_progress ?? 0;
-    const packed = data?.packed ?? 0;
-    const inTransit = data?.in_transit ?? data?.in_transist ?? 0;
-    const delivered = data?.delivered ?? 0;
 
     const kpis = [
         {
@@ -56,7 +37,7 @@ export default function OrderListKpiCards({
             description: "Received to date",
             icon: ShoppingCart,
             colorClass: "bg-indigo-50 text-indigo-600 border-indigo-100",
-            isDropdown: false,
+            statusKey: "",
         },
         {
             label: "New Orders",
@@ -64,7 +45,7 @@ export default function OrderListKpiCards({
             description: "Awaiting production",
             icon: Sparkles,
             colorClass: "bg-blue-50 text-blue-600 border-blue-100",
-            isDropdown: false,
+            statusKey: "Confirmed",
         },
         {
             label: "Ongoing Orders",
@@ -72,7 +53,7 @@ export default function OrderListKpiCards({
             description: "Active pipeline & delivery",
             icon: Activity,
             colorClass: "bg-amber-50 text-amber-600 border-amber-100",
-            isDropdown: true,
+            statusKey: "Ongoing",
         },
     ];
 
@@ -123,15 +104,13 @@ export default function OrderListKpiCards({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
             {kpis.map((kpi) => {
                 const Icon = kpi.icon;
-                const isDropdownCard = kpi.isDropdown;
 
                 return (
                     <div
                         key={kpi.label}
-                        ref={isDropdownCard ? dropdownRef : undefined}
-                        onClick={isDropdownCard ? () => setDropdownOpen(!dropdownOpen) : undefined}
-                        className={`bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center shadow-3xs hover:translate-y-[-1px] hover:shadow-2xs transition-all relative ${isDropdownCard ? "cursor-pointer select-none" : ""
-                            }`}
+                        onClick={() => onSelectStatus?.(kpi.statusKey)}
+                        className="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center shadow-3xs hover:translate-y-[-1px] hover:shadow-2xs transition-all cursor-pointer select-none"
+                        title={`Filter by ${kpi.label}`}
                     >
                         <div className="flex-1 min-w-0">
                             <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
@@ -145,73 +124,10 @@ export default function OrderListKpiCards({
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            {isDropdownCard && (
-                                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
-                            )}
                             <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border ${kpi.colorClass}`}>
                                 <Icon size={16} />
                             </div>
                         </div>
-
-                        {isDropdownCard && dropdownOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg p-3.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150 space-y-1 text-left">
-                                <h4 className="text-[9px] font-black uppercase tracking-wider text-slate-400 border-b pb-1.5 mb-1.5">
-                                    Ongoing Breakdown
-                                </h4>
-                                <div
-                                    onClick={(e) => {
-                                        if (onSelectStatus) {
-                                            e.stopPropagation();
-                                            onSelectStatus("In Progress");
-                                            setDropdownOpen(false);
-                                        }
-                                    }}
-                                    className="flex justify-between items-center text-[11px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 p-1.5 rounded-lg cursor-pointer transition-colors"
-                                >
-                                    <span>In Progress</span>
-                                    <span className="font-bold text-slate-800">{inProgress}</span>
-                                </div>
-                                <div
-                                    onClick={(e) => {
-                                        if (onSelectStatus) {
-                                            e.stopPropagation();
-                                            onSelectStatus("Packed");
-                                            setDropdownOpen(false);
-                                        }
-                                    }}
-                                    className="flex justify-between items-center text-[11px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 p-1.5 rounded-lg cursor-pointer transition-colors"
-                                >
-                                    <span>Packed</span>
-                                    <span className="font-bold text-slate-800">{packed}</span>
-                                </div>
-                                <div
-                                    onClick={(e) => {
-                                        if (onSelectStatus) {
-                                            e.stopPropagation();
-                                            onSelectStatus("In Transit");
-                                            setDropdownOpen(false);
-                                        }
-                                    }}
-                                    className="flex justify-between items-center text-[11px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 p-1.5 rounded-lg cursor-pointer transition-colors"
-                                >
-                                    <span>In Transit</span>
-                                    <span className="font-bold text-slate-800">{inTransit}</span>
-                                </div>
-                                <div
-                                    onClick={(e) => {
-                                        if (onSelectStatus) {
-                                            e.stopPropagation();
-                                            onSelectStatus("Delivered");
-                                            setDropdownOpen(false);
-                                        }
-                                    }}
-                                    className="flex justify-between items-center text-[11px] font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 p-1.5 rounded-lg cursor-pointer transition-colors"
-                                >
-                                    <span>Delivered</span>
-                                    <span className="font-bold text-slate-800">{delivered}</span>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 );
             })}

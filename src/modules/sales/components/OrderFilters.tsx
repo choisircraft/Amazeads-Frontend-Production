@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, X, ChevronDown, Check } from "lucide-react";
+import { SalesOrderStatusData } from "../types";
 
 interface OrderFiltersProps {
   search: string;
@@ -11,6 +12,7 @@ interface OrderFiltersProps {
   setCommitToDate?: (val: string) => void;
   completionDate?: string;
   setCompletionDate?: (val: string) => void;
+  kpiData?: SalesOrderStatusData | null;
 }
 
 const ONGOING_OPTIONS = [
@@ -30,6 +32,7 @@ export default function OrderFilters({
   setCommitToDate,
   completionDate,
   setCompletionDate,
+  kpiData,
 }: OrderFiltersProps) {
   const [ongoingDropdownOpen, setOngoingDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -47,12 +50,32 @@ export default function OrderFilters({
   const ongoingValues = ["Ongoing", "In Progress", "Packed", "In Transit", "In Transist", "Delivered"];
   const isOngoingActive = ongoingValues.includes(orderStatus);
 
+  const getOngoingCount = (value: string): number => {
+    if (!kpiData) return 0;
+    switch (value) {
+      case "Ongoing":
+        return kpiData.ongoing_orders ?? 0;
+      case "In Progress":
+        return kpiData.in_progress ?? 0;
+      case "Packed":
+        return kpiData.packed ?? 0;
+      case "In Transit":
+        return (kpiData.in_transit ?? kpiData.in_transist) ?? 0;
+      case "Delivered":
+        return kpiData.delivered ?? 0;
+      default:
+        return 0;
+    }
+  };
+
   const getOngoingButtonLabel = () => {
     if (!isOngoingActive || orderStatus === "Ongoing") {
-      return "Ongoing";
+      const cnt = kpiData?.ongoing_orders;
+      return cnt !== undefined ? `Ongoing (${cnt})` : "Ongoing";
     }
-    if (orderStatus === "In Transist") return "In Transit";
-    return orderStatus;
+    const label = orderStatus === "In Transist" ? "In Transit" : orderStatus;
+    const cnt = getOngoingCount(label);
+    return `${label} (${cnt})`;
   };
 
   return (
@@ -189,15 +212,21 @@ export default function OrderFilters({
           </button>
 
           {ongoingDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200/90 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150 text-left">
-              <div className="px-3 py-1 text-[9px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                Ongoing Status
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200/90 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150 text-left">
+              <div className="px-3 py-1 text-[9px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 flex items-center justify-between">
+                <span>Ongoing Status</span>
+                {kpiData?.ongoing_orders !== undefined && (
+                  <span className="text-[9px] font-bold text-slate-500">
+                    Total: {kpiData.ongoing_orders}
+                  </span>
+                )}
               </div>
               <div className="py-1">
                 {ONGOING_OPTIONS.map((opt) => {
                   const isSelected =
                     orderStatus === opt.value ||
                     (opt.value === "In Transit" && orderStatus === "In Transist");
+                  const count = getOngoingCount(opt.value);
 
                   return (
                     <button
@@ -217,9 +246,20 @@ export default function OrderFilters({
                         <span className={`w-2 h-2 rounded-full ${opt.color}`} />
                         <span>{opt.label}</span>
                       </span>
-                      {isSelected && (
-                        <Check size={13} className="text-indigo-600 shrink-0" />
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded min-w-[20px] text-center ${
+                            isSelected
+                              ? "bg-indigo-100 text-indigo-800 font-black"
+                              : "bg-slate-100 text-slate-600 font-bold"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                        {isSelected && (
+                          <Check size={13} className="text-indigo-600 shrink-0" />
+                        )}
+                      </div>
                     </button>
                   );
                 })}

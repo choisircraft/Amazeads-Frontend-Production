@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Plus, Eye, Edit2, ArrowRightLeft, FileDown, FileText, Loader2, Search } from "lucide-react";
-import Button from "@/components/ui/Button";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Plus, Eye, Edit2, ArrowRightLeft, FileDown, FileText, Loader2, Search, ArrowLeft } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import { OrderItemResponse } from "../types";
 import { getOrdersList, getOrderById } from "../services/order.service";
@@ -16,8 +15,10 @@ import styles from "../components/OrderListComponents.module.css";
 import { generateQuotationPdf } from "@/lib/pdfHelper";
 import { formatDateStyle } from "@/lib/formatDate";
 
-export default function QuotationListPage() {
+function QuotationListContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromOverview = searchParams.get("from") === "overview";
   const { selectedCategory } = useSalesStore();
 
   const [quotations, setQuotations] = useState<OrderItemResponse[]>([]);
@@ -177,21 +178,29 @@ export default function QuotationListPage() {
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.headerRow}>
-        <div>
-          <h1 className={styles.title}>Quotation Register</h1>
-          <p className={styles.subtitle}>
-            Manage drafted price quotes, create PDF documents, and view specifications.
-          </p>
+        <div className="flex items-center gap-3">
+          {fromOverview && (
+            <Link
+              href="/sales"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-3xs cursor-pointer shrink-0"
+              title="Return to Sales Overview"
+            >
+              <ArrowLeft size={14} /> Back to Overview
+            </Link>
+          )}
+          <div>
+            <h1 className={styles.title}>Quotation Register</h1>
+            <p className={styles.subtitle}>
+              Manage drafted price quotes, create PDF documents, and view specifications.
+            </p>
+          </div>
         </div>
-        <Link href="/sales/create-quotation" passHref legacyBehavior>
-          <Button
-            variant="primary"
-            size="sm"
-            className="flex items-center gap-1.5 cursor-pointer font-bold"
-            onClick={() => useSidebarStore.getState().setCollapsed(true)}
-          >
-            <Plus size={16} /> Create Price Quotation
-          </Button>
+        <Link
+          href="/sales/create-quotation"
+          onClick={() => useSidebarStore.getState().setCollapsed(true)}
+          className="inline-flex items-center justify-center font-bold rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 h-9 px-3 text-xs gap-1.5 cursor-pointer shadow-3xs"
+        >
+          <Plus size={16} /> Create Price Quotation
         </Link>
       </div>
 
@@ -327,13 +336,12 @@ export default function QuotationListPage() {
 
                                   {/* Edit Quotation Button */}
                                   {isDraft && (
-                                    <Link href={`/sales/create-quotation?quotation_id=${quote.id}`} passHref legacyBehavior>
-                                      <button
-                                        className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 rounded-lg cursor-pointer transition-colors"
-                                        title="Edit Quotation"
-                                      >
-                                        <Edit2 size={13} />
-                                      </button>
+                                    <Link
+                                      href={`/sales/create-quotation?quotation_id=${quote.id}`}
+                                      className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 rounded-lg cursor-pointer transition-colors inline-flex items-center justify-center"
+                                      title="Edit Quotation"
+                                    >
+                                      <Edit2 size={13} />
                                     </Link>
                                   )}
 
@@ -408,5 +416,13 @@ export default function QuotationListPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function QuotationListPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500 font-semibold">Loading quotations...</div>}>
+      <QuotationListContent />
+    </React.Suspense>
   );
 }
