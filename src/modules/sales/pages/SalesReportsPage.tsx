@@ -10,6 +10,10 @@ import {
   FileBarChart2,
   RotateCcw,
   ChevronDown,
+  Landmark,
+  TrendingUp,
+  Layers,
+  Info,
 } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import {
@@ -158,6 +162,8 @@ interface DrawerProps {
 }
 
 function SalesReportDetailsDrawer({ item, onClose }: DrawerProps) {
+  const [drawerTab, setDrawerTab] = useState<"period" | "cumulative">("period");
+
   // Close on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -165,7 +171,22 @@ function SalesReportDetailsDrawer({ item, onClose }: DrawerProps) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Reset to period tab when item changes
+  useEffect(() => {
+    setDrawerTab("period");
+  }, [item]);
+
   if (!item) return null;
+
+  const totalPeriodAccountCollection = (item.account_breakdown || []).reduce(
+    (sum, a) => sum + (Number(a.cash_collection) || 0),
+    0
+  );
+
+  const totalCumulativeAccountCollection = (item.total_account_breakdown || []).reduce(
+    (sum, a) => sum + (Number(a.cash_collection) || 0),
+    0
+  );
 
   return (
     <>
@@ -184,41 +205,282 @@ function SalesReportDetailsDrawer({ item, onClose }: DrawerProps) {
           </button>
         </div>
 
+        {/* Tab switcher */}
+        <div className="flex border-b border-slate-200 bg-slate-50/80 px-5 pt-2 gap-2 text-xs font-bold shrink-0">
+          <button
+            type="button"
+            onClick={() => setDrawerTab("period")}
+            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              drawerTab === "period"
+                ? "border-indigo-600 text-indigo-700 font-extrabold"
+                : "border-transparent text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <CalendarDays size={13} />
+            <span>Period Breakdown</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDrawerTab("cumulative")}
+            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              drawerTab === "cumulative"
+                ? "border-indigo-600 text-indigo-700 font-extrabold"
+                : "border-transparent text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <TrendingUp size={13} />
+            <span>Overall Total</span>
+          </button>
+        </div>
+
         {/* Body */}
         <div className={styles.drawerBody}>
-          {/* Period Info */}
-          <div className={styles.drawerSection}>
-            <div className={styles.drawerSectionTitle}>Report Period</div>
-            <div className={styles.drawerRow}>
-              <span className={styles.drawerRowKey}>Period Name</span>
-              <span className={styles.drawerRowVal}>{item.name}</span>
-            </div>
-            <div className={styles.drawerRow}>
-              <span className={styles.drawerRowKey}>From Date</span>
-              <span className={styles.drawerRowVal}>{formatDate(item.from_date)}</span>
-            </div>
-            <div className={styles.drawerRow}>
-              <span className={styles.drawerRowKey}>To Date</span>
-              <span className={styles.drawerRowVal}>{formatDate(item.to_date)}</span>
-            </div>
-          </div>
-
-          {/* Sales Summary */}
-          <div className={styles.drawerSection}>
-            <div className={styles.drawerSectionTitle}>Sales Summary</div>
-            {[
-              { key: "Orders",            val: String(item.orders || 0),                                           color: "" },
-              { key: "Sales Amount",      val: formatINR(item.sales_amount),                                       color: "" },
-              { key: "Cash Collection",   val: formatINR(item.cash_collection),                                    color: "#16a34a" },
-              { key: "Orders Collection", val: formatINR(item.live_orders_collection ?? item.orders_collection), color: "#2563eb" },
-              { key: "Pending",           val: formatINR(item.live_orders_pending ?? item.orders_pending),         color: "#d97706" },
-            ].map(({ key, val, color }) => (
-              <div key={key} className={styles.drawerRow}>
-                <span className={styles.drawerRowKey}>{key}</span>
-                <span className={styles.drawerRowVal} style={color ? { color } : undefined}>{val}</span>
+          {drawerTab === "period" ? (
+            <>
+              {/* Period Info */}
+              <div className={styles.drawerSection}>
+                <div className={styles.drawerSectionTitle}>Report Period</div>
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerRowKey}>Period Name</span>
+                  <span className={styles.drawerRowVal}>{item.name}</span>
+                </div>
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerRowKey}>From Date</span>
+                  <span className={styles.drawerRowVal}>{formatDate(item.from_date)}</span>
+                </div>
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerRowKey}>To Date</span>
+                  <span className={styles.drawerRowVal}>{formatDate(item.to_date)}</span>
+                </div>
               </div>
-            ))}
-          </div>
+
+              {/* Sales Summary */}
+              <div className={styles.drawerSection}>
+                <div className={styles.drawerSectionTitle}>Sales Summary</div>
+                {[
+                  { key: "Orders", val: String(item.orders || 0), color: "" },
+                  { key: "Sales Amount", val: formatINR(item.sales_amount), color: "" },
+                  { key: "Cash Collection", val: formatINR(item.cash_collection), color: "#16a34a" },
+                  { key: "Orders Collection", val: formatINR(item.live_orders_collection ?? item.orders_collection), color: "#2563eb" },
+                  { key: "Pending", val: formatINR(item.live_orders_pending ?? item.orders_pending), color: "#d97706" },
+                  ...(item.orders_cancelled !== undefined && item.orders_cancelled > 0
+                    ? [{ key: "Cancelled Orders", val: `${item.orders_cancelled} (${formatINR(item.cancelled_orders_amount)})`, color: "#e11d48" }]
+                    : []),
+                ].map(({ key, val, color }) => (
+                  <div key={key} className={styles.drawerRow}>
+                    <span className={styles.drawerRowKey}>{key}</span>
+                    <span className={styles.drawerRowVal} style={color ? { color } : undefined}>{val}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bank Account-wise Collection Breakdown */}
+              <div className={styles.drawerSection}>
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    <Landmark size={13} className="text-indigo-600" />
+                    <span>Bank Account Breakdown</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {item.account_breakdown?.length || 0} Accounts
+                  </span>
+                </div>
+
+                {item.account_breakdown && item.account_breakdown.length > 0 ? (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-3xs">
+                    <table className="w-full text-left text-xs whitespace-nowrap">
+                      <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase text-[9.5px] border-b border-slate-200">
+                        <tr>
+                          <th className="px-3.5 py-2">Bank / Account</th>
+                          <th className="px-3.5 py-2 text-right">Cash Collection</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {item.account_breakdown.map((acc, idx) => (
+                          <tr key={acc.account_id || idx} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-3.5 py-2 font-bold text-slate-800 flex items-center gap-2">
+                              <div className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                <Landmark size={11} />
+                              </div>
+                              <span>{acc.account_name}</span>
+                            </td>
+                            <td className={`px-3.5 py-2 text-right font-extrabold ${acc.cash_collection > 0 ? "text-emerald-600" : "text-slate-400"}`}>
+                              {formatINR(acc.cash_collection)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-slate-50/80 border-t border-slate-200 font-extrabold text-xs">
+                        <tr>
+                          <td className="px-3.5 py-2 text-slate-700">Total Period Collection</td>
+                          <td className="px-3.5 py-2 text-right text-emerald-700 font-black">
+                            {formatINR(totalPeriodAccountCollection)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                    No bank account breakdown logged for this period.
+                  </p>
+                )}
+              </div>
+
+              {/* Category-wise Breakdown (if present) */}
+              {item.sales_category_breakdown && item.sales_category_breakdown.length > 0 && (
+                <div className={styles.drawerSection}>
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      <Layers size={13} className="text-indigo-600" />
+                      <span>Sales Category Breakdown</span>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-3xs">
+                    <table className="w-full text-left text-xs whitespace-nowrap">
+                      <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase text-[9.5px] border-b border-slate-200">
+                        <tr>
+                          <th className="px-3 py-2">Category</th>
+                          <th className="px-2 py-2 text-right">Orders</th>
+                          <th className="px-3 py-2 text-right">Sales</th>
+                          <th className="px-3 py-2 text-right">Collection</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {item.sales_category_breakdown.map((cat, idx) => (
+                          <tr key={cat.category_id || idx} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-3 py-2 font-bold text-slate-800">{cat.category_name}</td>
+                            <td className="px-2 py-2 text-right text-slate-600 font-medium">{cat.orders ?? 0}</td>
+                            <td className="px-3 py-2 text-right font-bold text-slate-800">{formatINR(cat.sales_amount)}</td>
+                            <td className="px-3 py-2 text-right font-bold text-emerald-600">{formatINR(cat.cash_collection)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Cumulative View */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-xs flex items-start gap-2">
+                <Info size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-amber-800 text-[11px] font-medium leading-relaxed">
+                  Cumulative grand totals represent all-time figures across the ERP.
+                </p>
+              </div>
+
+              {/* Cumulative KPI Cards Grid */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-3xs">
+                  <span className="text-[9.5px] font-bold text-slate-400 uppercase block">Total Orders</span>
+                  <strong className="text-sm font-black text-slate-900">{item.total_orders ?? 0}</strong>
+                </div>
+                <div className="bg-indigo-50/40 border border-indigo-100 rounded-xl p-2.5 shadow-3xs">
+                  <span className="text-[9.5px] font-bold text-indigo-600 uppercase block">Total Sales</span>
+                  <strong className="text-sm font-black text-indigo-900">{formatINR(item.total_sales_amount)}</strong>
+                </div>
+                <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-2.5 shadow-3xs">
+                  <span className="text-[9.5px] font-bold text-emerald-600 uppercase block">Total Collection</span>
+                  <strong className="text-sm font-black text-emerald-900">{formatINR(item.total_cash_collection)}</strong>
+                </div>
+                <div className="bg-amber-50/40 border border-amber-100 rounded-xl p-2.5 shadow-3xs">
+                  <span className="text-[9.5px] font-bold text-amber-600 uppercase block">Total Pending</span>
+                  <strong className="text-sm font-black text-amber-900">{formatINR(item.total_cash_pending)}</strong>
+                </div>
+              </div>
+
+              {/* Cumulative Bank Account Breakdown */}
+              <div className={styles.drawerSection}>
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    <Landmark size={13} className="text-emerald-600" />
+                    <span>Cumulative Account Breakdown</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {item.total_account_breakdown?.length || 0} Accounts
+                  </span>
+                </div>
+
+                {item.total_account_breakdown && item.total_account_breakdown.length > 0 ? (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-3xs">
+                    <table className="w-full text-left text-xs whitespace-nowrap">
+                      <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase text-[9.5px] border-b border-slate-200">
+                        <tr>
+                          <th className="px-3.5 py-2">Bank / Account</th>
+                          <th className="px-3.5 py-2 text-right">Total Cash Collection</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {item.total_account_breakdown.map((acc, idx) => (
+                          <tr key={acc.account_id || idx} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-3.5 py-2 font-bold text-slate-800 flex items-center gap-2">
+                              <div className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                <Landmark size={11} />
+                              </div>
+                              <span>{acc.account_name}</span>
+                            </td>
+                            <td className={`px-3.5 py-2 text-right font-extrabold ${acc.cash_collection > 0 ? "text-emerald-600" : "text-slate-400"}`}>
+                              {formatINR(acc.cash_collection)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-slate-50/80 border-t border-slate-200 font-extrabold text-xs">
+                        <tr>
+                          <td className="px-3.5 py-2 text-slate-700">Total All-Time Collection</td>
+                          <td className="px-3.5 py-2 text-right text-emerald-700 font-black">
+                            {formatINR(totalCumulativeAccountCollection)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                    No cumulative account breakdown recorded.
+                  </p>
+                )}
+              </div>
+
+              {/* Cumulative Category Breakdown */}
+              {item.total_sales_category_breakdown && item.total_sales_category_breakdown.length > 0 && (
+                <div className={styles.drawerSection}>
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      <Layers size={13} className="text-indigo-600" />
+                      <span>Cumulative Category Breakdown</span>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-3xs">
+                    <table className="w-full text-left text-xs whitespace-nowrap">
+                      <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase text-[9.5px] border-b border-slate-200">
+                        <tr>
+                          <th className="px-3 py-2">Category</th>
+                          <th className="px-2 py-2 text-right">Orders</th>
+                          <th className="px-3 py-2 text-right">Sales</th>
+                          <th className="px-3 py-2 text-right">Collection</th>
+                          <th className="px-3 py-2 text-right">Pending</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {item.total_sales_category_breakdown.map((cat, idx) => (
+                          <tr key={cat.category_id || idx} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-3 py-2 font-bold text-slate-800">{cat.category_name}</td>
+                            <td className="px-2 py-2 text-right text-slate-600 font-medium">{cat.total_orders ?? 0}</td>
+                            <td className="px-3 py-2 text-right font-bold text-slate-800">{formatINR(cat.total_sales_amount)}</td>
+                            <td className="px-3 py-2 text-right font-bold text-emerald-600">{formatINR(cat.total_cash_collection)}</td>
+                            <td className="px-3 py-2 text-right font-bold text-amber-600">{formatINR(cat.total_cash_pending)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </aside>
     </>

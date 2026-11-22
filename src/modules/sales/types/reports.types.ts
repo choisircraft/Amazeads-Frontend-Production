@@ -2,6 +2,27 @@
 
 export type SalesReportType = "daily" | "weekly" | "monthly" | "yearly";
 
+export interface SalesReportAccountBreakdown {
+  account_id: number;
+  account_name: string;
+  cash_collection: number;
+}
+
+export interface SalesReportCategoryBreakdown {
+  category_id?: number;
+  category_name?: string;
+  orders?: number;
+  sales_amount?: number;
+  cash_collection?: number;
+  orders_pending?: number;
+  total_orders?: number;
+  total_sales_amount?: number;
+  total_cash_collection?: number;
+  total_cash_pending?: number;
+  total_orders_cancelled?: number;
+  total_cancelled_orders_amount?: number;
+}
+
 export interface SalesReportItem {
   id: number;
   name: string;
@@ -17,10 +38,18 @@ export interface SalesReportItem {
   orders_pending: number;
   live_orders_collection?: number;
   live_orders_pending?: number;
+  account_breakdown?: SalesReportAccountBreakdown[];
+  total_account_breakdown?: SalesReportAccountBreakdown[];
+  sales_category_breakdown?: SalesReportCategoryBreakdown[];
+  total_sales_category_breakdown?: SalesReportCategoryBreakdown[];
+  orders_cancelled?: number;
+  cancelled_orders_amount?: number;
   total_orders: number;
   total_sales_amount: number;
   total_cash_collection: number;
   total_cash_pending: number;
+  total_orders_cancelled?: number;
+  total_cancelled_orders_amount?: number;
   created_by: number;
   updated_orders_ids: number[];
   total_sales_count: number;
