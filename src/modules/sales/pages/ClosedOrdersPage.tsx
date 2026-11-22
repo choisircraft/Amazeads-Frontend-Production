@@ -313,10 +313,8 @@ export default function ClosedOrdersPage() {
                                 <th style={{ width: "135px" }}>CUSTOMER</th>
                                 <th>PRODUCT</th>
                                 <th style={{ width: "45px", textAlign: "center" }}>QTY</th>
-                                <th style={{ width: "95px" }}>ORDER DATE</th>
                                 <th style={{ width: "95px" }}>COMMIT DATE</th>
-                                <th style={{ width: "100px" }}>COMPLETION DATE</th>
-                                <th style={{ width: "110px", textAlign: "center" }}>DAYS LEFT</th>
+                                <th style={{ width: "115px" }}>COMPLETION DATE</th>
                                 <th style={{ width: "100px" }}>FINAL AMT</th>
                                 <th style={{ width: "90px", textAlign: "center" }}>PAYMENT</th>
                                 <th style={{ width: "90px", textAlign: "center" }}>STATUS</th>
@@ -326,13 +324,13 @@ export default function ClosedOrdersPage() {
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={12} style={{ textAlign: "center", padding: "20px" }}>
+                                    <td colSpan={10} style={{ textAlign: "center", padding: "20px" }}>
                                         Loading closed sales orders...
                                     </td>
                                 </tr>
                             ) : orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={12} style={{ textAlign: "center", padding: "24px" }}>
+                                    <td colSpan={10} style={{ textAlign: "center", padding: "24px" }}>
                                         No closed orders found for selected date filters.
                                     </td>
                                 </tr>
@@ -392,16 +390,13 @@ export default function ClosedOrdersPage() {
                                                         {isFirstRow && (
                                                             <>
                                                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                                                    {formatDateStyle(order.order_date)}
-                                                                </td>
-                                                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
                                                                     {formatDateStyle(order.commit_date)}
                                                                 </td>
                                                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                                                    {formatDateStyle(order.completion_date)}
-                                                                </td>
-                                                                <td rowSpan={projectsCount} style={{ textAlign: "center" }} className="align-middle whitespace-nowrap">
-                                                                    {getDaysLeftBadge(order.completion_date, order.completed_date)}
+                                                                    <div className="font-semibold text-slate-700">{formatDateStyle(order.completion_date)}</div>
+                                                                    <div className="mt-1">
+                                                                        {getDaysLeftBadge(order.completion_date, order.completed_date)}
+                                                                    </div>
                                                                 </td>
                                                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap font-bold text-slate-800">
                                                                     ₹{(order.final_amount || 0).toLocaleString("en-IN")}
