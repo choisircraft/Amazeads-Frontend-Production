@@ -84,19 +84,20 @@ export default function DesignApprovalPage() {
             <thead>
               <tr>
                 <th style={{ width: "110px" }}>ORDER ID</th>
-                <th style={{ width: "200px" }}>CUSTOMER</th>
+                <th style={{ width: "180px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
-                <th style={{ width: "140px" }}>COMPLETED ON</th>
-                <th style={{ width: "140px" }}>ASSIGNED TO</th>
-                <th style={{ width: "120px" }}>DEADLINE</th>
-                <th style={{ width: "140px", textAlign: "center" }}>ACTIONS</th>
+                <th style={{ width: "130px" }}>CREATED BY</th>
+                <th style={{ width: "130px" }}>ASSIGNED TO</th>
+                <th style={{ width: "130px" }}>COMPLETED ON</th>
+                <th style={{ width: "110px" }}>DEADLINE</th>
+                <th style={{ width: "130px", textAlign: "center" }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} style={{ textAlign: "center", padding: "24px" }}>Loading pending approvals...</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: "center", padding: "24px" }}>Loading pending approvals...</td></tr>
               ) : pendingList.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: "center", padding: "32px" }}>No design proofs awaiting customer approval.</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: "center", padding: "32px" }}>No design proofs awaiting customer approval.</td></tr>
               ) : (
                 pendingList.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
@@ -135,8 +136,9 @@ export default function DesignApprovalPage() {
                         />
                       )}
                     </td>
+                    <td style={{ fontWeight: 700 }} className="capitalize text-slate-800">{item.created_by_name || "—"}</td>
+                    <td style={{ fontWeight: 700 }} className="capitalize">{item.assigned_to_name || "—"}</td>
                     <td>{formatDateStyle(item.completed_on)}</td>
-                    <td style={{ fontWeight: 700 }} className="capitalize">{item.assigned_to_name || "Anas"}</td>
                     <td style={{ fontWeight: 700 }}>{formatDateStyle(item.commit_date)}</td>
                     <td className="text-center">
                       <div className={styles.actionGroup}>
