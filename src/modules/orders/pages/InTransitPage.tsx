@@ -91,6 +91,83 @@ export function InTransitPage({ role = "project-manager" }: { role?: UserRole })
     setCurrentPage(1);
   };
 
+  const getCompletionTimingBadge = (
+    completionDateStr?: string | null,
+    completedDateStr?: string | null
+  ) => {
+    if (!completionDateStr) return null;
+
+    try {
+      const compDatePart = completionDateStr.split("T")[0];
+      const compTime = new Date(`${compDatePart}T00:00:00`).getTime();
+      if (isNaN(compTime)) return null;
+
+      if (completedDateStr) {
+        const doneDatePart = completedDateStr.split("T")[0];
+        const doneTime = new Date(`${doneDatePart}T00:00:00`).getTime();
+
+        if (!isNaN(doneTime)) {
+          const delayDays = Math.round((doneTime - compTime) / (1000 * 60 * 60 * 24));
+
+          if (delayDays > 0) {
+            return (
+              <span className="bg-orange-50 text-orange-700 border border-orange-200 font-extrabold px-1.5 py-0.5 rounded text-[9.5px] whitespace-nowrap inline-flex items-center gap-1 shadow-3xs">
+                <span className="h-1 w-1 rounded-full bg-orange-500" />
+                {delayDays === 1 ? "1 day delayed" : `${delayDays} days delayed`}
+              </span>
+            );
+          }
+
+          if (delayDays < 0) {
+            const earlyDays = Math.abs(delayDays);
+            return (
+              <span className="bg-blue-50 text-blue-700 border border-blue-200 font-bold px-1.5 py-0.5 rounded text-[9.5px] whitespace-nowrap shadow-3xs">
+                {earlyDays === 1 ? "1 day early" : `${earlyDays} days early`}
+              </span>
+            );
+          }
+
+          return (
+            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1.5 py-0.5 rounded text-[9.5px] whitespace-nowrap shadow-3xs">
+              On Time
+            </span>
+          );
+        }
+      }
+
+      // If completed_date is not available, compare with today's date
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const todayTime = new Date(`${todayStr}T00:00:00`).getTime();
+
+      const diffDays = Math.round((compTime - todayTime) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) {
+        const daysOver = Math.abs(diffDays);
+        return (
+          <span className="bg-orange-50 text-orange-700 border border-orange-200 font-extrabold px-1.5 py-0.5 rounded text-[9.5px] whitespace-nowrap inline-flex items-center gap-1 shadow-3xs">
+            <span className="h-1 w-1 rounded-full bg-orange-500" />
+            {daysOver === 1 ? "1 day delayed" : `${daysOver} days delayed`}
+          </span>
+        );
+      }
+      if (diffDays === 0) {
+        return (
+          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1.5 py-0.5 rounded text-[9.5px] whitespace-nowrap shadow-3xs">
+            On Time
+          </span>
+        );
+      }
+      return (
+        <span className="bg-blue-50 text-blue-700 border border-blue-200 font-bold px-1.5 py-0.5 rounded text-[9.5px] whitespace-nowrap shadow-3xs">
+          {diffDays === 1 ? "1 day early" : `${diffDays} days early`}
+        </span>
+      );
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <div className={styles.container}>
 
@@ -196,10 +273,9 @@ export function InTransitPage({ role = "project-manager" }: { role?: UserRole })
                 <th style={{ width: "110px" }}>ORDER NUMBER</th>
                 <th style={{ width: "160px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
-                <th style={{ width: "150px" }}>TRACKING ID</th>
-                <th style={{ width: "140px" }}>DELIVERY TYPE</th>
-                <th style={{ width: "125px", textAlign: "center" }}>COMPLETION DATE</th>
-                <th style={{ width: "135px", textAlign: "center" }}>EXPECTED DELIVERY DAYS</th>
+                <th style={{ width: "135px" }}>TRACKING ID</th>
+                <th style={{ width: "130px" }}>DELIVERY TYPE</th>
+                <th style={{ width: "140px", textAlign: "center" }}>COMPLETION DATE</th>
                 <th style={{ width: "120px" }}>TOTAL AMOUNT</th>
                 <th style={{ width: "100px", textAlign: "center" }}>STATUS</th>
                 <th style={{ width: "140px", textAlign: "center" }}>ACTION</th>
@@ -207,9 +283,9 @@ export function InTransitPage({ role = "project-manager" }: { role?: UserRole })
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} className="text-center py-10 font-semibold text-slate-500">Loading transit shipments...</td></tr>
+                <tr><td colSpan={9} className="text-center py-10 font-semibold text-slate-500">Loading transit shipments...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={10} className="text-center py-10 font-semibold text-slate-500">No active shipments in transit.</td></tr>
+                <tr><td colSpan={9} className="text-center py-10 font-semibold text-slate-500">No active shipments in transit.</td></tr>
               ) : (
                 orders.map((order) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
@@ -273,29 +349,33 @@ export function InTransitPage({ role = "project-manager" }: { role?: UserRole })
 
                             {isFirstRow && (
                               <>
-                                <td rowSpan={projectsCount} className="font-mono text-xs align-middle">
+                                <td rowSpan={projectsCount} className="font-mono align-middle">
                                   {order.tracking_id ? (
-                                    <span className="font-bold text-indigo-700">{order.tracking_id}</span>
+                                    <span className="font-bold text-indigo-700 text-[10.5px] break-all leading-tight">
+                                      {order.tracking_id}
+                                    </span>
                                   ) : (
-                                    <span className="text-slate-400 italic text-[11px]">Tracking ID Not Assigned</span>
+                                    <span className="text-slate-400 italic text-[10px]">Tracking ID Not Assigned</span>
                                   )}
                                 </td>
                                 <td rowSpan={projectsCount} className="font-semibold text-slate-700 capitalize align-middle">{order.delivery_type_name || "—"}</td>
                                 <td rowSpan={projectsCount} style={{ textAlign: "center" }} className="align-middle whitespace-nowrap">
-                                  <div className="text-xs font-bold text-slate-700">
-                                    {formatDateStyle(order.completion_date || order.commit_date)}
+                                  <div className="flex flex-col items-center justify-center gap-1">
+                                    <div className="text-xs font-bold text-slate-700">
+                                      {formatDateStyle(order.completion_date || order.commit_date)}
+                                    </div>
+                                    {getCompletionTimingBadge(order.completion_date, order.completed_date)}
+                                    {order.expected_delivery_days !== null && order.expected_delivery_days !== undefined && order.expected_delivery_days !== "" && (
+                                      <div className="text-[10px] font-semibold text-slate-500 whitespace-nowrap">
+                                        ex.del days : {typeof order.expected_delivery_days === "string" ? order.expected_delivery_days.replace(/days?/i, "").trim() : order.expected_delivery_days}
+                                      </div>
+                                    )}
+                                    {order.days_left !== null && order.days_left !== undefined && (
+                                      <div className={`text-[10px] font-bold whitespace-nowrap ${Number(order.days_left) < 0 ? "text-rose-600" : "text-slate-600"}`}>
+                                        days left : {order.days_left}
+                                      </div>
+                                    )}
                                   </div>
-                                </td>
-                                <td rowSpan={projectsCount} style={{ textAlign: "center" }} className="align-middle whitespace-nowrap">
-                                  {order.expected_delivery_days !== null && order.expected_delivery_days !== undefined && order.expected_delivery_days !== "" ? (
-                                    <span className="text-xs font-bold text-slate-700">
-                                      {String(order.expected_delivery_days).toLowerCase().includes("day")
-                                        ? order.expected_delivery_days
-                                        : `${order.expected_delivery_days} ${Number(order.expected_delivery_days) === 1 ? "Day" : "Days"}`}
-                                    </span>
-                                  ) : (
-                                    <span className="text-slate-400 font-bold text-xs">—</span>
-                                  )}
                                 </td>
                                 <td rowSpan={projectsCount} className="font-extrabold text-slate-900 align-middle">
                                   <div>₹{(order.final_amount || 0).toLocaleString("en-IN")}</div>
