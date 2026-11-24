@@ -145,23 +145,24 @@ export function ProductForLogisticsPage({ role = "project-manager" }: { role?: U
         </div>
 
         <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 text-xs font-semibold">
-          {/* 🌟 Search across all text fields */}
-          <div className="relative flex items-center min-w-[200px] sm:w-60">
-            <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+          {/* 🌟 Search across tracking_id, order_number, customer name, mobile number, invoice_id */}
+          <div className="relative flex items-center min-w-[200px] sm:w-60 bg-white rounded-lg border border-slate-200 shadow-2xs px-2.5 py-1">
+            <Search size={13} className="text-slate-400 mr-2 shrink-0 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search projects, customer, code..."
+              placeholder="Search tracking, order #, customer..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-7 h-8 text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-indigo-600 transition-all shadow-2xs"
+              className="bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none w-full"
             />
             {search && (
               <button
+                type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer shrink-0 ml-1"
                 title="Clear search"
               >
-                <X size={13} />
+                <X size={12} />
               </button>
             )}
           </div>
@@ -187,15 +188,13 @@ export function ProductForLogisticsPage({ role = "project-manager" }: { role?: U
             </button>
           </div>
 
-          {(search || taskFilter !== false || tasksCompletedFilter !== undefined) && (
-            <button
-              onClick={handleResetFilters}
-              className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-              title="Reset Filters"
-            >
-              <RotateCcw size={14} />
-            </button>
-          )}
+          <button
+            onClick={handleResetFilters}
+            className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+            title="Reset Filters"
+          >
+            <RotateCcw size={14} />
+          </button>
         </div>
       </div>
 
@@ -219,7 +218,11 @@ export function ProductForLogisticsPage({ role = "project-manager" }: { role?: U
               {isLoading ? (
                 <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading logistics queue...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>No items found for this filter.</td></tr>
+                <tr>
+                  <td colSpan={9} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold text-xs">
+                    {debouncedSearch ? `No logistics items found matching "${debouncedSearch}".` : "No items found for this filter."}
+                  </td>
+                </tr>
               ) : (
                 orders.map((order, orderIdx) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
