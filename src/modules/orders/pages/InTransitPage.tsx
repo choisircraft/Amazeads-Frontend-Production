@@ -349,13 +349,13 @@ export function InTransitPage({ role = "project-manager" }: { role?: UserRole })
 
                             {isFirstRow && (
                               <>
-                                <td rowSpan={projectsCount} className="font-mono align-middle">
+                                <td rowSpan={projectsCount} className="align-middle">
                                   {order.tracking_id ? (
-                                    <span className="font-bold text-indigo-700 text-[10.5px] break-all leading-tight">
+                                    <span className="font-mono font-bold text-indigo-700 text-[9px] break-all leading-tight block">
                                       {order.tracking_id}
                                     </span>
                                   ) : (
-                                    <span className="text-slate-400 italic text-[10px]">Tracking ID Not Assigned</span>
+                                    <span className="text-slate-400 italic text-[9px] block">Tracking ID Not Assigned</span>
                                   )}
                                 </td>
                                 <td rowSpan={projectsCount} className="font-semibold text-slate-700 capitalize align-middle">{order.delivery_type_name || "—"}</td>
