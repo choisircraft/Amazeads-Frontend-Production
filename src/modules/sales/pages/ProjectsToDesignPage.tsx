@@ -60,13 +60,14 @@ export default function ProjectsToDesignPage() {
       // 🌟 category_id 5-ാമത്തെ പെരാമീറ്റർ ആയി അയക്കുന്നു
       const categoryId = selectedCategory?.id || CATEGORY_IDS.CRYSTAL_WALL_ART;
 
+      const targetDate = isUptoDate ? (designDate || getTodayDateStr()) : designDate;
       const data = await getProjectsToDesignList(
         currentPage,
         5,
-        isUptoDate ? undefined : designDate,
+        isUptoDate ? undefined : targetDate,
         taskFilter,
         categoryId,
-        isUptoDate ? designDate : undefined,
+        isUptoDate ? targetDate : undefined,
         debouncedSearch.trim() || undefined
       );
 
@@ -183,7 +184,11 @@ export default function ProjectsToDesignPage() {
               type="checkbox"
               checked={isUptoDate}
               onChange={(e) => {
-                setIsUptoDate(e.target.checked);
+                const checked = e.target.checked;
+                setIsUptoDate(checked);
+                if (checked) {
+                  setDesignDate(getTodayDateStr());
+                }
                 setCurrentPage(1);
               }}
               className="w-3.5 h-3.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"

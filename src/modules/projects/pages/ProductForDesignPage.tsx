@@ -121,14 +121,15 @@ export function ProductForDesignPage({ role = "project-manager" }: { role?: User
   const fetchDesignProjects = async () => {
     setIsLoading(true);
     try {
+      const targetDate = isUptoDate ? (designDate || getTodayDateStr()) : designDate;
       const data = await getProjectsForDesignList(
         currentPage,
         5,
-        isUptoDate ? undefined : designDate,
+        isUptoDate ? undefined : targetDate,
         taskFilter,
         role,
         activeCategoryId,
-        isUptoDate ? designDate : undefined,
+        isUptoDate ? targetDate : undefined,
         debouncedSearch.trim() || undefined
       );
       const items = data.items || [];
@@ -224,7 +225,11 @@ export function ProductForDesignPage({ role = "project-manager" }: { role?: User
               type="checkbox"
               checked={isUptoDate}
               onChange={(e) => {
-                setIsUptoDate(e.target.checked);
+                const checked = e.target.checked;
+                setIsUptoDate(checked);
+                if (checked) {
+                  setDesignDate(getTodayDateStr());
+                }
                 setCurrentPage(1);
               }}
               className="w-3.5 h-3.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
