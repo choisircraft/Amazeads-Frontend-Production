@@ -273,7 +273,7 @@ export function InTransitPage({ role = "project-manager" }: { role?: UserRole })
                 <th style={{ width: "110px" }}>ORDER NUMBER</th>
                 <th style={{ width: "160px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
-                <th style={{ width: "135px" }}>TRACKING ID</th>
+                <th style={{ width: "145px" }}>TRACKING ID</th>
                 <th style={{ width: "130px" }}>DELIVERY TYPE</th>
                 <th style={{ width: "140px", textAlign: "center" }}>COMPLETION DATE</th>
                 <th style={{ width: "120px" }}>TOTAL AMOUNT</th>
@@ -351,11 +351,11 @@ export function InTransitPage({ role = "project-manager" }: { role?: UserRole })
                               <>
                                 <td rowSpan={projectsCount} className="align-middle">
                                   {order.tracking_id ? (
-                                    <span className="font-mono font-bold text-indigo-700 text-[9px] break-all leading-tight block">
+                                    <span className="font-mono font-bold text-indigo-700 text-[9.5px] break-words whitespace-normal leading-snug block">
                                       {order.tracking_id}
                                     </span>
                                   ) : (
-                                    <span className="text-slate-400 italic text-[9px] block">Tracking ID Not Assigned</span>
+                                    <span className="text-slate-400 italic text-[9.5px] break-words whitespace-normal block">Tracking ID Not Assigned</span>
                                   )}
                                 </td>
                                 <td rowSpan={projectsCount} className="font-semibold text-slate-700 capitalize align-middle">{order.delivery_type_name || "—"}</td>
