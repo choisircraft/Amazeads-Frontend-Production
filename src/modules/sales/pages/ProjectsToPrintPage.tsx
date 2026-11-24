@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Eye, Calendar, RotateCcw, Edit3 } from "lucide-react";
+import { Eye, Calendar, RotateCcw, Edit3, Search, X } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import { useSalesStore } from "@/store/salesStore";
 import { CATEGORY_IDS } from "@/constants/categories";
@@ -30,6 +30,18 @@ export default function ProjectsToPrintPage() {
   // 🌟 ഇതുവരെയുള്ള ഡാറ്റ ഫെച്ച് ചെയ്യാൻ Upto Date ചെക്ക്ബോക്സ് (default: false)
   const [isUptoDate, setIsUptoDate] = useState<boolean>(false);
 
+  // Search Filter
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   // Modal States
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedTimelineProjectId, setSelectedTimelineProjectId] = useState<number | null>(null);
@@ -54,7 +66,8 @@ export default function ProjectsToPrintPage() {
         isUptoDate ? undefined : printingDate,
         taskFilter,
         categoryId,
-        isUptoDate ? printingDate : undefined
+        isUptoDate ? printingDate : undefined,
+        debouncedSearch.trim() || undefined
       );
 
       const items = data.items || [];
@@ -73,9 +86,11 @@ export default function ProjectsToPrintPage() {
   useEffect(() => {
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, printingDate, taskFilter, selectedCategory, isUptoDate]);
+  }, [currentPage, printingDate, taskFilter, selectedCategory, isUptoDate, debouncedSearch]);
 
   const handleResetFilters = () => {
+    setSearch("");
+    setDebouncedSearch("");
     setPrintingDate(getTodayDateStr());
     setTaskFilter(false);
     setIsUptoDate(false);
@@ -108,6 +123,28 @@ export default function ProjectsToPrintPage() {
 
         {/* 🌟 Printing Date (Default Today) & Task Assigned Filter Panel */}
         <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 text-xs font-semibold">
+
+          {/* Search across tracking_id, order_number, customer name, mobile number, invoice_id */}
+          <div className="relative flex items-center min-w-[200px] sm:w-60 bg-white rounded-lg border border-slate-200 shadow-2xs px-2.5 py-1">
+            <Search size={13} className="text-slate-400 mr-2 shrink-0 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search tracking, order #, customer..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none w-full"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer shrink-0 ml-1"
+                title="Clear search"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
 
           {/* Printing Date Picker (Default Today) */}
           <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
@@ -187,7 +224,11 @@ export default function ProjectsToPrintPage() {
               {isLoading ? (
                 <tr><td colSpan={7} style={{ textAlign: "center", padding: "24px" }}>Loading pending print queue...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: "center", padding: "32px" }}>No projects queued for selected date or filter.</td></tr>
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "28px" }} className="text-slate-500 font-semibold text-xs">
+                    {debouncedSearch ? `No projects found matching "${debouncedSearch}".` : "No projects queued for selected date or filter."}
+                  </td>
+                </tr>
               ) : (
                 orders.map((order) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
