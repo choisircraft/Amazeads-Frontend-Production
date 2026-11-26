@@ -257,6 +257,17 @@ export interface SalesPaymentStatusResponse {
   data: SalesPaymentStatusData;
 }
 
+export interface SalesProjectsTodayKpiData {
+  projects_for_design_today: number;
+  projects_for_print_today: number;
+}
+
+export interface SalesProjectsTodayKpiResponse {
+  success: boolean;
+  message?: string;
+  data: SalesProjectsTodayKpiData;
+}
+
 export interface SalesOverviewFilters {
   date?: string;
   month?: string;

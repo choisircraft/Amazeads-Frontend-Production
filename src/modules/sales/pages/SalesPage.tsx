@@ -26,12 +26,15 @@ import {
   Eye,
   Edit2,
   MessageCircle,
-  Search
+  Search,
+  Paintbrush,
+  Printer
 } from "lucide-react";
 import {
   getSalesKpiCards,
   getSalesOrderStatusKpi,
-  getSalesPaymentStatusKpi
+  getSalesPaymentStatusKpi,
+  getSalesProjectsTodayKpi
 } from "../services/salesKpi.service";
 import { getOrdersList } from "../services/order.service";
 import { getPendingDesignApprovalsCount } from "../services/designApproval.service";
@@ -41,7 +44,8 @@ import {
   SalesKpiData,
   SalesOrderStatusData,
   SalesPaymentStatusData,
-  SalesOverviewFilters
+  SalesOverviewFilters,
+  SalesProjectsTodayKpiData
 } from "../types";
 import { useSalesStore } from "@/store/salesStore";
 import PieChart from "@/components/charts/PieChart";
@@ -110,6 +114,8 @@ export default function SalesPage() {
   // ── Priority Action Strip Counters ──
   const [dispatchTodayCount, setDispatchTodayCount] = useState<number>(0);
   const [designApprovalCount, setDesignApprovalCount] = useState<number>(0);
+  const [projectsTodayData, setProjectsTodayData] = useState<SalesProjectsTodayKpiData | null>(null);
+  const [loadingProjectsToday, setLoadingProjectsToday] = useState<boolean>(false);
 
 
   // ── Modal States ──
@@ -252,8 +258,26 @@ export default function SalesPage() {
     }
   };
 
+  const fetchProjectsToday = async () => {
+    setLoadingProjectsToday(true);
+    try {
+      const params: SalesOverviewFilters =
+        filterType === "month" && selectedMonth
+          ? { month: selectedMonth, year: currentYear }
+          : { date: selectedDate || todayStr };
+      const res = await getSalesProjectsTodayKpi(params);
+      if (res?.success) setProjectsTodayData(res.data);
+      else setProjectsTodayData(null);
+    } catch {
+      setProjectsTodayData(null);
+    } finally {
+      setLoadingProjectsToday(false);
+    }
+  };
+
   useEffect(() => {
     fetchKpis();
+    fetchProjectsToday();
   }, [filterType, selectedDate, selectedMonth, selectedCategory]);
 
   useEffect(() => {
@@ -272,6 +296,7 @@ export default function SalesPage() {
 
   const handleRefresh = () => {
     fetchKpis();
+    fetchProjectsToday();
     fetchOrderStatus();
     fetchPaymentStatus();
     fetchWatchlist();
@@ -308,7 +333,7 @@ export default function SalesPage() {
     }).format(value);
   };
 
-  const isRefreshing = loadingKpi || loadingOrderStatus || loadingPaymentStatus;
+  const isRefreshing = loadingKpi || loadingOrderStatus || loadingPaymentStatus || loadingProjectsToday;
 
   // Compute metrics
   const totalOrders = kpiData?.orders || 0;
@@ -574,6 +599,51 @@ export default function SalesPage() {
           </div>
           <div className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-indigo-100">
             <Palette size={16} />
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Row 2: Projects to Design & Projects to Print ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+        {/* Card 5: Projects to Design */}
+        <div
+          onClick={() => router.push("/sales/projects-to-design")}
+          className="bg-white border border-sky-200 hover:border-sky-400 rounded-xl p-3 shadow-3xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between group"
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-black text-sky-700">
+                {projectsTodayData?.projects_for_design_today ?? 0}
+              </span>
+              <span className="text-xs font-bold text-slate-800">Projects to Design</span>
+            </div>
+            <p className="text-[10px] text-slate-450 font-medium truncate mt-0.5">
+              Ready for designing queue
+            </p>
+          </div>
+          <div className="h-8 w-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-sky-100">
+            <Paintbrush size={16} />
+          </div>
+        </div>
+
+        {/* Card 6: Projects to Print */}
+        <div
+          onClick={() => router.push("/sales/projects-to-print")}
+          className="bg-white border border-purple-200 hover:border-purple-400 rounded-xl p-3 shadow-3xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between group"
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-black text-purple-700">
+                {projectsTodayData?.projects_for_print_today ?? 0}
+              </span>
+              <span className="text-xs font-bold text-slate-800">Projects to Print</span>
+            </div>
+            <p className="text-[10px] text-slate-450 font-medium truncate mt-0.5">
+              Approved & ready for printing
+            </p>
+          </div>
+          <div className="h-8 w-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-purple-100">
+            <Printer size={16} />
           </div>
         </div>
       </div>

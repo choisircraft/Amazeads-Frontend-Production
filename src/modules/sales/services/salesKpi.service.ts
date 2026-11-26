@@ -4,6 +4,7 @@ import {
     SalesKpiCardsResponse,
     SalesOrderStatusResponse,
     SalesPaymentStatusResponse,
+    SalesProjectsTodayKpiResponse,
     SalesOverviewFilters
 } from "../types";
 
@@ -35,5 +36,12 @@ export async function getSalesOrderStatusKpi(filters?: SalesOverviewFilters): Pr
 export async function getSalesPaymentStatusKpi(filters?: SalesOverviewFilters): Promise<SalesPaymentStatusResponse> {
     const params = injectCategoryFilter(filters);
     const response = await api.get("/sales/kpi-cards/payments", { params });
+    return response.data;
+}
+
+// 4. Get Projects Today KPI Data
+export async function getSalesProjectsTodayKpi(filters?: SalesOverviewFilters): Promise<SalesProjectsTodayKpiResponse> {
+    const params = injectCategoryFilter(filters);
+    const response = await api.get("/sales/kpi-cards/projects-today", { params });
     return response.data;
 }
