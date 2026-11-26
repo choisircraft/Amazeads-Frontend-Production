@@ -16,76 +16,6 @@ interface CancelledOrdersPageProps {
   role?: "sales" | "admin" | "project-manager" | "manager";
 }
 
-// 🌟 Delay status badge based on completion_date & completed_date
-function getDelayStatusBadge(completionDateStr?: string | null, completedDateStr?: string | null) {
-  if (!completionDateStr) return null;
-
-  const compDate = completionDateStr.split("T")[0];
-  if (!compDate) return null;
-
-  // 1. When completed_date is present (order is completed)
-  if (completedDateStr) {
-    const doneDate = completedDateStr.split("T")[0];
-    if (doneDate) {
-      const compTime = new Date(`${compDate}T00:00:00`).getTime();
-      const doneTime = new Date(`${doneDate}T00:00:00`).getTime();
-
-      if (!isNaN(compTime) && !isNaN(doneTime)) {
-        const diffDays = Math.round((doneTime - compTime) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 0) {
-          return (
-            <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shadow-3xs">
-              On Date
-            </span>
-          );
-        } else {
-          return (
-            <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap shadow-3xs">
-              <span className="h-1 w-1 rounded-full bg-orange-500" />
-              Delayed by {diffDays} {diffDays === 1 ? "day" : "days"}
-            </span>
-          );
-        }
-      }
-    }
-  }
-
-  // 2. When completed_date is null (order is not yet completed)
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-
-  const compTime = new Date(`${compDate}T00:00:00`).getTime();
-  const todayTime = new Date(`${todayStr}T00:00:00`).getTime();
-
-  if (isNaN(compTime) || isNaN(todayTime)) return null;
-
-  const diffDays = Math.round((todayTime - compTime) / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) {
-    // completion_date is in the future (> current date): show nothing
-    return null;
-  }
-
-  if (diffDays === 0) {
-    // completion_date = current date: show due today
-    return (
-      <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shadow-3xs">
-        <span className="h-1 w-1 rounded-full bg-amber-500" />
-        Due Today
-      </span>
-    );
-  }
-
-  // completion_date is in the past (< current date): show overdue by X day(s)
-  return (
-    <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shadow-3xs">
-      <span className="h-1 w-1 rounded-full bg-rose-500 animate-pulse" />
-      Overdue by {diffDays} {diffDays === 1 ? "day" : "days"}
-    </span>
-  );
-}
-
 export default function CancelledOrdersPage({ role = "sales" }: CancelledOrdersPageProps) {
   const { selectedCategory } = useProjectManagerStore();
   const activeCategoryId = selectedCategory?.id || CATEGORY_IDS.CRYSTAL_WALL_ART;
@@ -387,10 +317,7 @@ export default function CancelledOrdersPage({ role = "sales" }: CancelledOrdersP
                                   {formatDateStyle(order.commit_date || "")}
                                 </td>
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                  <div className="flex flex-col items-start">
-                                    <span>{formatDateStyle(order.completion_date || "")}</span>
-                                    {getDelayStatusBadge(order.completion_date, order.completed_date || order.completed_on)}
-                                  </div>
+                                  {formatDateStyle(order.completion_date || "")}
                                 </td>
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap font-bold text-slate-800">
                                   ₹{(order.final_amount || 0).toLocaleString("en-IN")}
