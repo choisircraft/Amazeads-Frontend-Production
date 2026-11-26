@@ -327,8 +327,8 @@ useEffect(() => {
     const s = (status || "Confirmed").toLowerCase().trim();
     if (s === "confirmed") {
       return (
-        <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200">
-          Confirmed
+        <span className={`${styles.statusBadge} ${styles.badgeOrder}`}>
+          NEW ORDER
         </span>
       );
     }
