@@ -114,7 +114,11 @@ export function PackedOrdersPage({ role = "project-manager" }: { role?: UserRole
     return "bg-slate-500 text-white";
   };
 
-  const getDaysLeftBadge = (completionDateStr?: string, status?: string) => {
+  const getDaysLeftBadge = (
+    completionDateStr?: string,
+    status?: string,
+    completedDateStr?: string | null
+  ) => {
     const s = (status || "").toLowerCase().trim();
     if (s === "delivered") {
       return (
@@ -134,47 +138,60 @@ export function PackedOrdersPage({ role = "project-manager" }: { role?: UserRole
     if (!completionDateStr) return <span className="text-slate-400 font-bold text-xs">—</span>;
 
     try {
+      const compDatePart = completionDateStr.split("T")[0];
+      const compTime = new Date(`${compDatePart}T00:00:00`).getTime();
+      if (isNaN(compTime)) return <span className="text-slate-400 font-bold text-xs">—</span>;
+
+      // 1. When completed_date is present (order is completed)
+      if (completedDateStr) {
+        const doneDatePart = completedDateStr.split("T")[0];
+        const doneTime = new Date(`${doneDatePart}T00:00:00`).getTime();
+
+        if (!isNaN(doneTime)) {
+          const diffDays = Math.round((doneTime - compTime) / (1000 * 60 * 60 * 24));
+          if (diffDays <= 0) {
+            return (
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap shadow-3xs">
+                On Date
+              </span>
+            );
+          } else {
+            return (
+              <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 border border-orange-200 font-bold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap shadow-3xs">
+                <span className="h-1 w-1 rounded-full bg-orange-500" />
+                Delayed by {diffDays} {diffDays === 1 ? "day" : "days"}
+              </span>
+            );
+          }
+        }
+      }
+
+      // 2. When completed_date is null (order is ongoing / packed)
       const now = new Date();
       const pad = (n: number) => String(n).padStart(2, "0");
       const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
       const todayTime = new Date(`${todayStr}T00:00:00`).getTime();
 
-      const compDatePart = completionDateStr.split("T")[0];
-      const compTime = new Date(`${compDatePart}T00:00:00`).getTime();
-      if (isNaN(compTime)) return <span className="text-slate-400 font-bold text-xs">—</span>;
-
-      const diffDays = Math.round((compTime - todayTime) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.round((todayTime - compTime) / (1000 * 60 * 60 * 24));
 
       if (diffDays < 0) {
-        const daysOver = Math.abs(diffDays);
-        return (
-          <span className="bg-rose-50 text-rose-700 border border-rose-200 font-extrabold px-2 py-0.5 rounded text-[10.5px] whitespace-nowrap inline-flex items-center gap-1 shadow-3xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
-            {daysOver} {daysOver === 1 ? "day overdue" : "days overdue"}
-          </span>
-        );
+        // Future deadline: show nothing
+        return null;
       }
 
       if (diffDays === 0) {
         return (
-          <span className="bg-amber-50 text-amber-700 border border-amber-200 font-extrabold px-2 py-0.5 rounded text-[10.5px] whitespace-nowrap inline-flex items-center gap-1 shadow-3xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 font-extrabold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap shadow-3xs">
+            <span className="h-1 w-1 rounded-full bg-amber-500" />
             Due Today
           </span>
         );
       }
 
-      if (diffDays === 1) {
-        return (
-          <span className="bg-blue-50 text-blue-700 border border-blue-200 font-bold px-2 py-0.5 rounded text-[10.5px] whitespace-nowrap shadow-3xs">
-            1 day left
-          </span>
-        );
-      }
-
       return (
-        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded text-[10.5px] whitespace-nowrap shadow-3xs">
-          {diffDays} days left
+        <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 font-extrabold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap shadow-3xs">
+          <span className="h-1 w-1 rounded-full bg-rose-500 animate-pulse" />
+          Overdue by {diffDays} {diffDays === 1 ? "day" : "days"}
         </span>
       );
     } catch {
@@ -373,7 +390,7 @@ export function PackedOrdersPage({ role = "project-manager" }: { role?: UserRole
                                     {formatDateStyle(order.completion_date || order.commit_date)}
                                   </div>
                                   <div className="mt-0.5">
-                                    {getDaysLeftBadge(order.completion_date || order.commit_date, order.order_status)}
+                                    {getDaysLeftBadge(order.completion_date || order.commit_date, order.order_status, order.completed_date || order.completed_on)}
                                   </div>
                                 </td>
                                 <td rowSpan={projectsCount} className="font-semibold text-indigo-700 capitalize align-middle">{getResolvedDeliveryTypeName(order) || "—"}</td>

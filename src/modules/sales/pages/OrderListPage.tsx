@@ -272,7 +272,7 @@ useEffect(() => {
 
           return (
             <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded text-[10.5px] whitespace-nowrap shadow-3xs">
-              On Time
+              On Date
             </span>
           );
         }

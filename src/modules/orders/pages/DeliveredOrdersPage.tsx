@@ -13,6 +13,76 @@ import { CATEGORY_IDS } from "@/constants/categories";
 import { UserRole } from "@/modules/project-manager/services/managerOrder.service";
 import { formatDateStyle } from "@/lib/formatDate";
 
+// 🌟 Delay status badge based on completion_date & completed_date
+function getDelayStatusBadge(completionDateStr?: string | null, completedDateStr?: string | null) {
+  if (!completionDateStr) return null;
+
+  const compDate = completionDateStr.split("T")[0];
+  if (!compDate) return null;
+
+  // 1. When completed_date is present (order is completed)
+  if (completedDateStr) {
+    const doneDate = completedDateStr.split("T")[0];
+    if (doneDate) {
+      const compTime = new Date(`${compDate}T00:00:00`).getTime();
+      const doneTime = new Date(`${doneDate}T00:00:00`).getTime();
+
+      if (!isNaN(compTime) && !isNaN(doneTime)) {
+        const diffDays = Math.round((doneTime - compTime) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 0) {
+          return (
+            <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shadow-3xs">
+              On Date
+            </span>
+          );
+        } else {
+          return (
+            <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap shadow-3xs">
+              <span className="h-1 w-1 rounded-full bg-orange-500" />
+              Delayed by {diffDays} {diffDays === 1 ? "day" : "days"}
+            </span>
+          );
+        }
+      }
+    }
+  }
+
+  // 2. When completed_date is null (order is not yet completed)
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+  const compTime = new Date(`${compDate}T00:00:00`).getTime();
+  const todayTime = new Date(`${todayStr}T00:00:00`).getTime();
+
+  if (isNaN(compTime) || isNaN(todayTime)) return null;
+
+  const diffDays = Math.round((todayTime - compTime) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    // completion_date is in the future (> current date): show nothing
+    return null;
+  }
+
+  if (diffDays === 0) {
+    // completion_date = current date: show due today
+    return (
+      <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shadow-3xs">
+        <span className="h-1 w-1 rounded-full bg-amber-500" />
+        Due Today
+      </span>
+    );
+  }
+
+  // completion_date is in the past (< current date): show overdue by X day(s)
+  return (
+    <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shadow-3xs">
+      <span className="h-1 w-1 rounded-full bg-rose-500 animate-pulse" />
+      Overdue by {diffDays} {diffDays === 1 ? "day" : "days"}
+    </span>
+  );
+}
+
 export function DeliveredOrdersPage({ role = "project-manager" }: { role?: UserRole }) {
   const pmCategory = useProjectManagerStore((s) => s.selectedCategory);
   const salesCategory = useSalesStore((s) => s.selectedCategory);
@@ -255,6 +325,9 @@ export function DeliveredOrdersPage({ role = "project-manager" }: { role?: UserR
                                 <td rowSpan={projectsCount} style={{ textAlign: "center" }} className="align-middle whitespace-nowrap">
                                   <div className="text-xs font-bold text-slate-700">
                                     {formatDateStyle(order.completion_date || order.commit_date)}
+                                  </div>
+                                  <div className="mt-0.5">
+                                    {getDelayStatusBadge(order.completion_date || order.commit_date, order.completed_date || order.completed_on)}
                                   </div>
                                 </td>
                                 <td rowSpan={projectsCount} className="font-extrabold text-slate-900 align-middle">₹{(order.final_amount || 0).toLocaleString("en-IN")}</td>
