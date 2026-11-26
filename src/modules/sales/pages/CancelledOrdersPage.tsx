@@ -217,7 +217,7 @@ export default function CancelledOrdersPage({ role = "sales" }: CancelledOrdersP
                 <th style={{ width: "130px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
                 <th style={{ width: "45px", textAlign: "center" }}>QTY</th>
-                <th style={{ width: "95px" }}>COMMIT DATE</th>
+                {role === "sales" && <th style={{ width: "95px" }}>COMMIT DATE</th>}
                 <th style={{ width: "100px" }}>COMPLETION DATE</th>
                 <th style={{ width: "100px" }}>FINAL AMT</th>
                 <th style={{ width: "110px" }}>CREATED BY</th>
@@ -228,13 +228,13 @@ export default function CancelledOrdersPage({ role = "sales" }: CancelledOrdersP
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={role === "admin" ? 11 : 10} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold">
+                  <td colSpan={role === "admin" || role === "sales" ? 10 : 9} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold">
                     Loading cancelled orders...
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={role === "admin" ? 11 : 10} style={{ textAlign: "center", padding: "32px" }} className="text-slate-500 font-semibold">
+                  <td colSpan={role === "admin" || role === "sales" ? 10 : 9} style={{ textAlign: "center", padding: "32px" }} className="text-slate-500 font-semibold">
                     <div className="flex flex-col items-center gap-2">
                       <AlertCircle className="text-slate-400" size={24} />
                       <span>No cancelled order records found.</span>
@@ -313,9 +313,11 @@ export default function CancelledOrdersPage({ role = "sales" }: CancelledOrdersP
 
                             {isFirstRow && (
                               <>
-                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                  {formatDateStyle(order.commit_date || "")}
-                                </td>
+                                {role === "sales" && (
+                                  <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
+                                    {formatDateStyle(order.commit_date || "")}
+                                  </td>
+                                )}
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
                                   {formatDateStyle(order.completion_date || "")}
                                 </td>

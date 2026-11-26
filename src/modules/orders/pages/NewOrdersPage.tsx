@@ -193,7 +193,6 @@ export function NewOrdersPage({ role = "project-manager" }: { role?: UserRole })
                 <th style={{ width: "50px", textAlign: "center" }}>QTY</th>
                 <th style={{ width: "100px" }}>TOTAL</th>
                 <th style={{ width: "110px" }}>CREATED BY</th>
-                <th style={{ width: "110px" }}>COMMIT DATE</th>
                 <th style={{ width: "120px" }}>COMPLETION DATE</th>
                 <th style={{ width: "85px", textAlign: "center" }}>STATUS</th>
                 <th style={{ width: "150px", textAlign: "center" }}>ACTIONS</th>
@@ -201,9 +200,9 @@ export function NewOrdersPage({ role = "project-manager" }: { role?: UserRole })
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "20px" }}>Loading incoming orders...</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading incoming orders...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "24px" }}>No new incoming orders awaiting IDs.</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>No new incoming orders awaiting IDs.</td></tr>
               ) : (
                 orders.map((order) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
@@ -241,9 +240,6 @@ export function NewOrdersPage({ role = "project-manager" }: { role?: UserRole })
                                 </td>
                                 <td rowSpan={projectsCount} style={{ fontWeight: 700 }} className="align-middle capitalize">
                                   {order.created_by_name || "Aslam"}
-                                </td>
-                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-slate-600 text-xs font-semibold">
-                                  {formatDate(order.commit_date)}
                                 </td>
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-slate-600 text-xs font-semibold">
                                   <div className="flex flex-col items-start">

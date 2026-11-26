@@ -267,17 +267,16 @@ export function ProductForPrintPage({ role = "project-manager" }: { role?: UserR
                 <th style={{ width: "50px", textAlign: "center" }}>QTY</th>
                 <th style={{ width: "100px" }}>PRINT DATE</th>
                 <th style={{ width: "135px", minWidth: "130px", textAlign: "center" }}>PROGRESS</th>
-                <th style={{ width: "100px" }}>COMPLETION DATE</th>
-                <th style={{ width: "115px", textAlign: "center" }}>PRIORITY</th>
+                <th style={{ width: "115px" }}>COMPLETION DATE</th>
                 <th style={{ width: "100px" }}>TOTAL</th>
                 <th style={{ width: "170px", textAlign: "center" }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "20px" }}>Loading printing sheets...</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading printing sheets...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "24px" }}>No printing templates mapped for selected date or filter.</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>No printing templates mapped for selected date or filter.</td></tr>
               ) : (
                 orders.map((order, orderIdx) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
@@ -417,17 +416,12 @@ export function ProductForPrintPage({ role = "project-manager" }: { role?: UserR
 
                             {isFirstRow && (
                               <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                {formatDateStyle(order.completion_date)}
-                              </td>
-                            )}
-
-                            {isFirstRow && (
-                              <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-center">
-                                {isOrderPrintAssigned(order) ? (
-                                  <span className="text-slate-350 text-xs font-bold select-none">—</span>
-                                ) : (
-                                  <PriorityBadge completionDate={order.completion_date} />
-                                )}
+                                <div className="flex flex-col items-start gap-1">
+                                  <span>{formatDateStyle(order.completion_date)}</span>
+                                  {!isOrderPrintAssigned(order) && (
+                                    <PriorityBadge completionDate={order.completion_date} />
+                                  )}
+                                </div>
                               </td>
                             )}
 

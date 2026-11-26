@@ -9,6 +9,7 @@ import { CATEGORY_IDS } from "@/constants/categories";
 import SalesProjectDetailsModal from "@/modules/sales/components/SalesProjectDetailsModal";
 import AssignProductionTaskModal from "@/modules/project-manager/components/AssignProductionTaskModal";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
+import ProjectProgressCell from "../components/ProjectProgressCell";
 import styles from "@/modules/project-manager/components/PMOrderComponents.module.css";
 import { formatDateStyle } from "@/lib/formatDate";
 import { PriorityBadge, sortByCompletionDate } from "@/modules/project-manager/utils/completionPriority";
@@ -205,19 +206,18 @@ export function ProductForProductionPage({ role = "project-manager" }: { role?: 
                 <th>PRODUCT</th>
                 <th style={{ width: "50px", textAlign: "center" }}>QTY</th>
                 <th style={{ width: "100px" }}>PRINT DATE</th>
-                <th style={{ width: "95px" }}>COMMIT DATE</th>
-                <th style={{ width: "100px" }}>COMPLETION DATE</th>
-                <th style={{ width: "115px", textAlign: "center" }}>PRIORITY</th>
+                <th style={{ width: "135px", minWidth: "130px", textAlign: "center" }}>PROGRESS</th>
+                <th style={{ width: "115px" }}>COMPLETION DATE</th>
                 <th style={{ width: "100px" }}>TOTAL</th>
                 <th style={{ width: "170px", textAlign: "center" }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "20px" }}>Loading production items...</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading production items...</td></tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold text-xs">
+                  <td colSpan={9} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold text-xs">
                     {debouncedSearch ? `No production items found matching "${debouncedSearch}".` : "No production items found for this filter."}
                   </td>
                 </tr>
@@ -286,25 +286,16 @@ export function ProductForProductionPage({ role = "project-manager" }: { role?: 
                               {formatDateStyle(proj?.printing_date || order.printing_date)}
                             </td>
 
-                            {isFirstRow && (
-                              <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                {formatDateStyle(order.commit_date)}
-                              </td>
-                            )}
+                            <ProjectProgressCell departments={proj?.departments} />
 
                             {isFirstRow && (
                               <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                {formatDateStyle(order.completion_date)}
-                              </td>
-                            )}
-
-                            {isFirstRow && (
-                              <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-center">
-                                {isOrderProductionAssigned(order) ? (
-                                  <span className="text-slate-350 text-xs font-bold select-none">—</span>
-                                ) : (
-                                  <PriorityBadge completionDate={order.completion_date} />
-                                )}
+                                <div className="flex flex-col items-start gap-1">
+                                  <span>{formatDateStyle(order.completion_date)}</span>
+                                  {!isOrderProductionAssigned(order) && (
+                                    <PriorityBadge completionDate={order.completion_date} />
+                                  )}
+                                </div>
                               </td>
                             )}
 

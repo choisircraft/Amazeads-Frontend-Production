@@ -9,6 +9,7 @@ import { CATEGORY_IDS } from "@/constants/categories";
 import SalesProjectDetailsModal from "@/modules/sales/components/SalesProjectDetailsModal";
 import AssignLogisticsTaskModal from "@/modules/project-manager/components/AssignLogisticsTaskModal";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
+import ProjectProgressCell from "../components/ProjectProgressCell";
 import styles from "@/modules/project-manager/components/PMOrderComponents.module.css";
 import { formatDateStyle } from "@/lib/formatDate";
 import { PriorityBadge, sortByCompletionDate } from "@/modules/project-manager/utils/completionPriority";
@@ -207,19 +208,18 @@ export function ProductForLogisticsPage({ role = "project-manager" }: { role?: U
                 <th style={{ width: "150px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
                 <th style={{ width: "50px", textAlign: "center" }}>QTY</th>
-                <th style={{ width: "100px" }}>COMMIT DATE</th>
-                <th style={{ width: "100px" }}>COMPLETION DATE</th>
-                <th style={{ width: "115px", textAlign: "center" }}>PRIORITY</th>
+                <th style={{ width: "135px", minWidth: "130px", textAlign: "center" }}>PROGRESS</th>
+                <th style={{ width: "115px" }}>COMPLETION DATE</th>
                 <th style={{ width: "100px" }}>TOTAL</th>
                 <th style={{ width: "170px", textAlign: "center" }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading logistics queue...</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>Loading logistics queue...</td></tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold text-xs">
+                  <td colSpan={8} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold text-xs">
                     {debouncedSearch ? `No logistics items found matching "${debouncedSearch}".` : "No items found for this filter."}
                   </td>
                 </tr>
@@ -281,23 +281,16 @@ export function ProductForLogisticsPage({ role = "project-manager" }: { role?: U
                               {proj ? proj.quantity : "—"}
                             </td>
 
-                            <td className="align-middle whitespace-nowrap text-xs text-slate-600">
-                              {formatDateStyle(proj?.commit_date || order.commit_date || order.order_date)}
-                            </td>
+                            <ProjectProgressCell departments={proj?.departments} />
 
                             {isFirstRow && (
                               <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                {formatDateStyle(order.completion_date)}
-                              </td>
-                            )}
-
-                            {isFirstRow && (
-                              <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-center">
-                                {isOrderLogisticsAssigned(order) ? (
-                                  <span className="text-slate-350 text-xs font-bold select-none">—</span>
-                                ) : (
-                                  <PriorityBadge completionDate={order.completion_date} />
-                                )}
+                                <div className="flex flex-col items-start gap-1">
+                                  <span>{formatDateStyle(order.completion_date)}</span>
+                                  {!isOrderLogisticsAssigned(order) && (
+                                    <PriorityBadge completionDate={order.completion_date} />
+                                  )}
+                                </div>
                               </td>
                             )}
 

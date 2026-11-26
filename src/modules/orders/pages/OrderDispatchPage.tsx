@@ -235,7 +235,6 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
                 <th>PRODUCT</th>
                 <th style={{ width: "45px", textAlign: "center" }}>QTY</th>
                 <th style={{ width: "90px" }}>TOTAL</th>
-                <th style={{ width: "95px" }}>COMMIT DATE</th>
                 <th style={{ width: "100px" }}>COMPLETION DATE</th>
                 <th style={{ width: "100px" }}>CREATED BY</th>
                 <th style={{ width: "95px", textAlign: "center" }}>STATUS</th>
@@ -244,9 +243,9 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "20px" }}>Loading orders to dispatch...</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading orders to dispatch...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "24px" }}>No orders scheduled for this date.</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>No orders scheduled for this date.</td></tr>
               ) : (
                 orders.map((order) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
@@ -310,9 +309,6 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
                               <>
                                 <td rowSpan={projectsCount} style={{ fontWeight: 700 }} className="align-middle whitespace-nowrap">
                                   ₹{(order.final_amount || 0).toLocaleString("en-IN")}
-                                </td>
-                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap" style={{ color: "#64748b", fontSize: "0.775rem" }}>
-                                  {order.commit_date || "—"}
                                 </td>
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap" style={{ color: "#64748b", fontSize: "0.775rem" }}>
                                   <div className="flex flex-col items-start">

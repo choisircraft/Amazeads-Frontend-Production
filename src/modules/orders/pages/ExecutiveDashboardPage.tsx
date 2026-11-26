@@ -421,7 +421,6 @@ export function ExecutiveDashboardPage({
                 <th>PRODUCT</th>
                 <th style={{ width: "50px", textAlign: "center" }}>QTY</th>
                 <th style={{ width: "95px" }}>TOTAL</th>
-                <th style={{ width: "105px" }}>COMMIT DATE</th>
                 <th style={{ width: "115px" }}>COMPLETION DATE</th>
                 <th style={{ width: "120px" }}>CREATED BY</th>
                 <th style={{ width: "110px", textAlign: "center" }}>STATUS</th>
@@ -431,13 +430,13 @@ export function ExecutiveDashboardPage({
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 font-semibold text-slate-500">
+                  <td colSpan={9} className="text-center py-10 font-semibold text-slate-500">
                     Loading orders register...
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 font-semibold text-slate-500">
+                  <td colSpan={9} className="text-center py-10 font-semibold text-slate-500">
                     No orders found for this view.
                   </td>
                 </tr>
@@ -507,9 +506,6 @@ export function ExecutiveDashboardPage({
                               <>
                                 <td rowSpan={projectsCount} className="font-extrabold text-slate-900 align-middle whitespace-nowrap">
                                   ₹{(order.final_amount || order.total_amount || 0).toLocaleString("en-IN")}
-                                </td>
-                                <td rowSpan={projectsCount} className="align-middle text-slate-600 text-xs whitespace-nowrap">
-                                  {formatDateStyle(order.commit_date)}
                                 </td>
                                 <td rowSpan={projectsCount} className="align-middle text-slate-600 text-xs whitespace-nowrap">
                                   {formatDateStyle(order.completion_date)}

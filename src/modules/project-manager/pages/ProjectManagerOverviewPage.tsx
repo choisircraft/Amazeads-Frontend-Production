@@ -1156,14 +1156,13 @@ export default function ProjectManagerOverviewPage({ role = "project-manager" }:
                     <th style={{ minWidth: "130px" }}>CREATED BY</th>
                     <th style={{ minWidth: "130px" }}>ASSIGNED TO</th>
                     <th style={{ minWidth: "120px" }}>COMPLETED ON</th>
-                    <th style={{ minWidth: "110px" }}>COMMIT DATE</th>
                     <th style={{ minWidth: "75px", textAlign: "center" }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {isCustomLoading ? (
                     <tr>
-                      <td colSpan={8} style={{ textAlign: "center", padding: "24px" }}>
+                      <td colSpan={7} style={{ textAlign: "center", padding: "24px" }}>
                         <div className="flex items-center justify-center gap-2 text-slate-500 font-semibold text-xs">
                           <RotateCw size={14} className="animate-spin text-indigo-600" />
                           <span>Loading approval pending projects...</span>
@@ -1172,7 +1171,7 @@ export default function ProjectManagerOverviewPage({ role = "project-manager" }:
                     </tr>
                   ) : customViewOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ textAlign: "center", padding: "32px" }}>
+                      <td colSpan={7} style={{ textAlign: "center", padding: "32px" }}>
                         <div className="space-y-2">
                           <div className="text-sm font-bold text-slate-800">No Projects Found</div>
                           <p className="text-xs text-slate-400">There are no design projects awaiting customer approval.</p>
@@ -1227,9 +1226,6 @@ export default function ProjectManagerOverviewPage({ role = "project-manager" }:
                           </td>
                           <td className="align-middle whitespace-nowrap text-slate-600 text-xs font-semibold">
                             {item.completed_on || item.completed_date || item.completion_date || "—"}
-                          </td>
-                          <td className="align-middle whitespace-nowrap text-slate-600 text-xs font-semibold">
-                            {item.commit_date || "—"}
                           </td>
                           <td className="align-middle text-center">
                             <div className={styles.actionGroup}>
@@ -1402,7 +1398,6 @@ export default function ProjectManagerOverviewPage({ role = "project-manager" }:
                     <th style={{ minWidth: "160px" }}>PRODUCT</th>
                     <th style={{ minWidth: "60px", textAlign: "center" }}>QTY</th>
                     <th style={{ minWidth: "90px" }}>TOTAL</th>
-                    <th style={{ minWidth: "105px" }}>COMMIT DATE</th>
                     <th style={{ minWidth: "120px" }}>COMPLETION DATE</th>
                     <th style={{ minWidth: "110px" }}>CREATED BY</th>
                     <th style={{ minWidth: "110px", textAlign: "center" }}>STATUS</th>
@@ -1412,7 +1407,7 @@ export default function ProjectManagerOverviewPage({ role = "project-manager" }:
                 <tbody>
                   {isCustomLoading ? (
                     <tr>
-                      <td colSpan={10} style={{ textAlign: "center", padding: "24px" }}>
+                      <td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>
                         <div className="flex items-center justify-center gap-2 text-slate-500 font-semibold text-xs">
                           <RotateCw size={14} className="animate-spin text-indigo-600" />
                           <span>Loading {displayLabel} orders...</span>
@@ -1421,7 +1416,7 @@ export default function ProjectManagerOverviewPage({ role = "project-manager" }:
                     </tr>
                   ) : customViewOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={10} style={{ textAlign: "center", padding: "32px" }}>
+                      <td colSpan={9} style={{ textAlign: "center", padding: "32px" }}>
                         <div className="space-y-2">
                           <div className="text-sm font-bold text-slate-800">No Orders Found</div>
                           <p className="text-xs text-slate-400">
@@ -1490,9 +1485,6 @@ export default function ProjectManagerOverviewPage({ role = "project-manager" }:
                                   <>
                                     <td rowSpan={projectsCount} style={{ fontWeight: 700 }} className="align-middle whitespace-nowrap">
                                       ₹{(order.final_amount || order.total_amount || 0).toLocaleString("en-IN")}
-                                    </td>
-                                    <td rowSpan={projectsCount} className="align-middle whitespace-nowrap" style={{ color: "#64748b", fontSize: "0.775rem" }}>
-                                      {order.commit_date || "—"}
                                     </td>
                                     <td rowSpan={projectsCount} className="align-middle whitespace-nowrap" style={{ color: "#64748b", fontSize: "0.775rem" }}>
                                       <div className="flex flex-col items-start">

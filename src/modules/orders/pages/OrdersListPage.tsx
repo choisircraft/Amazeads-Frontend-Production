@@ -466,7 +466,6 @@ export function OrdersListPage({ role = "project-manager" }: { role?: UserRole }
                 <th style={{ minWidth: "160px" }}>PRODUCT</th>
                 <th style={{ minWidth: "60px", textAlign: "center" }}>QTY</th>
                 <th style={{ minWidth: "90px" }}>TOTAL</th>
-                <th style={{ minWidth: "105px" }}>COMMIT DATE</th>
                 <th style={{ minWidth: "120px" }}>COMPLETION DATE</th>
                 <th style={{ minWidth: "110px" }}>CREATED BY</th>
                 <th style={{ minWidth: "110px", textAlign: "center" }}>STATUS</th>
@@ -475,9 +474,9 @@ export function OrdersListPage({ role = "project-manager" }: { role?: UserRole }
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "20px" }}>Loading production register...</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading production register...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={10} style={{ textAlign: "center", padding: "24px" }}>No orders found.</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>No orders found.</td></tr>
               ) : (
                 orders.map((order) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
@@ -531,15 +530,11 @@ export function OrdersListPage({ role = "project-manager" }: { role?: UserRole }
                               {proj ? proj.quantity : "—"}
                             </td>
 
-                            {/* Total, Commit Date, Completed Date, Created By, Status, Actions (RowSpan) */}
+                            {/* Total, Completed Date, Created By, Status, Actions (RowSpan) */}
                             {isFirstRow && (
                               <>
                                 <td rowSpan={projectsCount} style={{ fontWeight: 700 }} className="align-middle whitespace-nowrap">
                                   ₹{(order.final_amount || 0).toLocaleString("en-IN")}
-                                </td>
-                                {/* ✅ COMMIT DATE (commit_date) */}
-                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap" style={{ color: "#64748b", fontSize: "0.775rem" }}>
-                                  {order.commit_date || "—"}
                                 </td>
                                 {/* ✅ COMPLETED DATE (completion_date) */}
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap" style={{ color: "#64748b", fontSize: "0.775rem" }}>
