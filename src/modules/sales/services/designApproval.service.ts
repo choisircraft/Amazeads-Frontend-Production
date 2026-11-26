@@ -2,10 +2,26 @@ import api from "@/lib/axios";
 
 // 1. കസ്റ്റമർ അപ്പ്രൂവൽ പെൻഡിങ് ഉള്ള പ്രൊജക്റ്റുകൾ ലിസ്റ്റ് ചെയ്യുന്നു
 // URL: [BASE_URL]/sales/projects/customer-approval-pending
-export async function getPendingDesignApprovals(page: number = 1, pageSize: number = 5, categoryId?: number): Promise<any> {
+export async function getPendingDesignApprovals(
+  page: number = 1,
+  pageSize: number = 5,
+  categoryId?: number,
+  search?: string,
+  customerApproved?: boolean,
+  completionDate?: string
+): Promise<any> {
   const params: any = { page, page_size: pageSize };
   if (categoryId) {
     params.category_id = categoryId;
+  }
+  if (search) {
+    params.search = search;
+  }
+  if (customerApproved !== undefined) {
+    params.customer_approved = customerApproved;
+  }
+  if (completionDate) {
+    params.completion_date = completionDate;
   }
   const response = await api.get("/sales/projects/customer-approval-pending", { params });
   return response.data;

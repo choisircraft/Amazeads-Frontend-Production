@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Eye, Lock } from "lucide-react";
+import { Eye, Lock, Search, X } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import { getDeliveredOrders } from "../services/order.service";
 import ViewOrderModal from "../components/ViewOrderModal";
 import ConfirmCloseOrderModal from "../components/ConfirmCloseOrderModal";
+import OrderDelayStatusBadge from "../components/OrderDelayStatusBadge";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
 import { useSalesStore } from "@/store/salesStore";
 import { CATEGORY_IDS } from "@/constants/categories";
@@ -20,6 +21,18 @@ export default function OrdersToClosePage() {
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Search filter
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   // Modals
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [selectedTimelineProjectId, setSelectedTimelineProjectId] = useState<number | null>(null);
@@ -31,7 +44,12 @@ export default function OrdersToClosePage() {
     setIsLoading(true);
     try {
       const activeCategoryId = selectedCategory?.id || CATEGORY_IDS.CRYSTAL_WALL_ART;
-      const data = await getDeliveredOrders(currentPage, 5, activeCategoryId);
+      const data = await getDeliveredOrders(
+        currentPage,
+        5,
+        activeCategoryId,
+        debouncedSearch.trim() || undefined
+      );
       setOrders(data.items || []);
       setTotalPages(data.pagination?.total_pages || 1);
       setTotalCount(data.pagination?.total_count || (data.items || []).length);
@@ -44,7 +62,7 @@ export default function OrdersToClosePage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [currentPage, selectedCategory]);
+  }, [currentPage, selectedCategory, debouncedSearch]);
 
   return (
     <div className={styles.container}>
@@ -53,6 +71,30 @@ export default function OrdersToClosePage() {
         <div>
           <h1 className={styles.title}>Orders To Close</h1>
           <p className={styles.subtitle}>Review delivered customer orders and perform final order closure audit.</p>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-2xs flex items-center gap-3 px-4 py-2.5 w-fit mb-4 flex-wrap">
+        <div className="relative flex items-center min-w-[220px] sm:w-72">
+          <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search orders, customer, phone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-7 h-8 text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              title="Clear search"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -102,7 +144,13 @@ export default function OrdersToClosePage() {
                                   {formatDateStyle(order.commit_date)}
                                 </td>
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                  {formatDateStyle(order.completion_date)}
+                                  <div className="font-semibold text-slate-700">{formatDateStyle(order.completion_date)}</div>
+                                  <div className="mt-1">
+                                    <OrderDelayStatusBadge
+                                      completionDate={order.completion_date}
+                                      completedDate={order.completed_date || order.completed_on}
+                                    />
+                                  </div>
                                 </td>
                                 <td rowSpan={projectsCount} style={{ fontWeight: 700 }} className="align-middle">
                                   {order.customer_name}

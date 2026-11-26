@@ -5,6 +5,7 @@ import { Eye, CheckCircle2, DollarSign, Calendar, X, Search } from "lucide-react
 import Pagination from "@/components/ui/Pagination";
 import { getPMOrders } from "@/modules/project-manager/services/managerOrder.service";
 import ViewOrderModal from "../components/ViewOrderModal";
+import OrderDelayStatusBadge from "../components/OrderDelayStatusBadge";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
 import styles from "../components/OrderListComponents.module.css";
 import { formatDateStyle } from "@/lib/formatDate";
@@ -92,75 +93,6 @@ export default function ClosedOrdersPage() {
                 return "bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider inline-block";
             default:
                 return "bg-slate-50 text-slate-600 border border-slate-200 font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider inline-block";
-        }
-    };
-
-    const getDaysLeftBadge = (
-        completionDateStr?: string,
-        completedDateStr?: string | null
-    ) => {
-        if (!completionDateStr) return null;
-
-        try {
-            const compDatePart = completionDateStr.split("T")[0];
-            const compTime = new Date(`${compDatePart}T00:00:00`).getTime();
-            if (isNaN(compTime)) return null;
-
-            // 1. When completed_date is present (not null): compare completed_date vs completion_date
-            if (completedDateStr) {
-                const doneDatePart = completedDateStr.split("T")[0];
-                const doneTime = new Date(`${doneDatePart}T00:00:00`).getTime();
-
-                if (!isNaN(doneTime)) {
-                    const delayDays = Math.round((doneTime - compTime) / (1000 * 60 * 60 * 24));
-
-                    if (delayDays > 0) {
-                        return (
-                            <span className="bg-orange-50 text-orange-700 border border-orange-200 font-extrabold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap inline-flex items-center gap-1 shadow-3xs">
-                                <span className="h-1 w-1 rounded-full bg-orange-500" />
-                                Delayed by {delayDays} {delayDays === 1 ? "day" : "days"}
-                            </span>
-                        );
-                    }
-
-                    return (
-                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap shadow-3xs">
-                            On Date
-                        </span>
-                    );
-                }
-            }
-
-            // 2. When completed_date is null: normal overdue / due today calculation
-            const now = new Date();
-            const pad = (n: number) => String(n).padStart(2, "0");
-            const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-            const todayTime = new Date(`${todayStr}T00:00:00`).getTime();
-
-            const diffDays = Math.round((todayTime - compTime) / (1000 * 60 * 60 * 24));
-
-            if (diffDays < 0) {
-                // Future deadline: show nothing
-                return null;
-            }
-
-            if (diffDays === 0) {
-                return (
-                    <span className="bg-amber-50 text-amber-700 border border-amber-200 font-extrabold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap inline-flex items-center gap-1 shadow-3xs">
-                        <span className="h-1 w-1 rounded-full bg-amber-500" />
-                        Due Today
-                    </span>
-                );
-            }
-
-            return (
-                <span className="bg-rose-50 text-rose-700 border border-rose-200 font-extrabold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap inline-flex items-center gap-1 shadow-3xs">
-                    <span className="h-1 w-1 rounded-full bg-rose-500 animate-pulse" />
-                    Overdue by {diffDays} {diffDays === 1 ? "day" : "days"}
-                </span>
-            );
-        } catch {
-            return null;
         }
     };
 
@@ -383,7 +315,10 @@ export default function ClosedOrdersPage() {
                                                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
                                                                     <div className="font-semibold text-slate-700">{formatDateStyle(order.completion_date)}</div>
                                                                     <div className="mt-1">
-                                                                        {getDaysLeftBadge(order.completion_date, order.completed_date)}
+                                                                        <OrderDelayStatusBadge
+                                                                            completionDate={order.completion_date}
+                                                                            completedDate={order.completed_date}
+                                                                        />
                                                                     </div>
                                                                 </td>
                                                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap font-bold text-slate-800">

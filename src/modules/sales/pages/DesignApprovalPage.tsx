@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Eye } from "lucide-react";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import { Eye, Search, X, Calendar, RotateCcw, Check } from "lucide-react";
 import { getPendingDesignApprovals, submitCustomerApproval } from "../services/designApproval.service";
 import SalesProjectDetailsModal from "../components/SalesProjectDetailsModal";
 import Pagination from "@/components/ui/Pagination";
@@ -21,6 +20,20 @@ export default function DesignApprovalPage() {
 
   const { selectedCategory } = useSalesStore();
 
+  // Filter States
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [completionDate, setCompletionDate] = useState("");
+  const [customerApproved, setCustomerApproved] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   // Modal States
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedTimelineProjectId, setSelectedTimelineProjectId] = useState<number | null>(null);
@@ -30,13 +43,40 @@ export default function DesignApprovalPage() {
     setIsLoading(true);
     try {
       const activeCategoryId = selectedCategory?.id || CATEGORY_IDS.CRYSTAL_WALL_ART;
-      const data = await getPendingDesignApprovals(currentPage, 5, activeCategoryId);
-      const items = data.items || data || [];
-      setPendingList(items);
-      const rawCount = data.pagination?.total_count || items.length;
-      const rawPages = data.pagination?.total_pages || 1;
-      setTotalCount(rawCount);
-      setTotalPages(rawPages);
+      const trimmedSearch = debouncedSearch.trim() || undefined;
+
+      if (completionDate) {
+        const data = await getPendingDesignApprovals(
+          1,
+          100,
+          activeCategoryId,
+          trimmedSearch,
+          customerApproved,
+          completionDate
+        );
+        const rawItems: any[] = data.items || data || [];
+        const matched = rawItems.filter(
+          (item) => (item.completion_date || "").split("T")[0] === completionDate
+        );
+        const start = (currentPage - 1) * 5;
+        setPendingList(matched.slice(start, start + 5));
+        setTotalCount(matched.length);
+        setTotalPages(Math.max(1, Math.ceil(matched.length / 5)));
+      } else {
+        const data = await getPendingDesignApprovals(
+          currentPage,
+          5,
+          activeCategoryId,
+          trimmedSearch,
+          customerApproved
+        );
+        const items = data.items || data || [];
+        setPendingList(items);
+        const rawCount = data.pagination?.total_count ?? items.length;
+        const rawPages = data.pagination?.total_pages || 1;
+        setTotalCount(rawCount);
+        setTotalPages(rawPages);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -51,7 +91,15 @@ export default function DesignApprovalPage() {
 
   useEffect(() => {
     loadPendingList();
-  }, [currentPage, selectedCategory]);
+  }, [currentPage, selectedCategory, debouncedSearch, completionDate, customerApproved]);
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setDebouncedSearch("");
+    setCompletionDate("");
+    setCustomerApproved(undefined);
+    setCurrentPage(1);
+  };
 
   // കസ്റ്റമർ ഡിസൈൻ അപ്പ്രൂവൽ സബ്മിറ്റ് ചെയ്യുന്നു 🌟
   const handleApprovalAction = async (projectId: number, approvedStatus: boolean = true) => {
@@ -73,9 +121,88 @@ export default function DesignApprovalPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.headerRow}>
-        <h1 className={styles.title}>Design Approvals Desk</h1>
-        <p className={styles.subtitle}>Verify and submit customer design approvals before forwarding to the printing unit.</p>
+      <div className={styles.headerRow} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <h1 className={styles.title}>Design Approvals Desk</h1>
+          <p className={styles.subtitle}>Verify and submit customer design approvals before forwarding to the printing unit.</p>
+        </div>
+
+        {/* Search, Completion Date & Customer Approved Filter Panel */}
+        <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 text-xs font-semibold">
+          {/* Search */}
+          <div className="relative flex items-center min-w-[200px] sm:w-60 bg-white rounded-lg border border-slate-200 shadow-2xs px-2.5 h-8">
+            <Search size={13} className="text-slate-400 mr-2 shrink-0 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search customer, order #, product..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none w-full"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer shrink-0 ml-1"
+                title="Clear search"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Completion Date */}
+          <div className="flex items-center gap-1.5 bg-white px-2.5 h-8 rounded-lg border border-slate-200 shadow-2xs">
+            <Calendar size={13} className="text-indigo-600 shrink-0" />
+            <span className="text-[10px] uppercase text-slate-400 font-bold whitespace-nowrap">Completion Date:</span>
+            <input
+              type="date"
+              value={completionDate}
+              onChange={(e) => { setCompletionDate(e.target.value); setCurrentPage(1); }}
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            />
+            {completionDate && (
+              <button
+                type="button"
+                onClick={() => { setCompletionDate(""); setCurrentPage(1); }}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
+                title="Clear completion date"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Customer Approved Toggle */}
+          <div className="flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg">
+            <button
+              type="button"
+              onClick={() => { setCustomerApproved(undefined); setCurrentPage(1); }}
+              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer text-[11px] ${!customerApproved ? "bg-white text-indigo-700 font-bold shadow-2xs" : "text-slate-600 hover:text-slate-900"}`}
+            >
+              Pending Approval
+            </button>
+            <button
+              type="button"
+              onClick={() => { setCustomerApproved(true); setCurrentPage(1); }}
+              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer text-[11px] ${customerApproved === true ? "bg-white text-indigo-700 font-bold shadow-2xs" : "text-slate-600 hover:text-slate-900"}`}
+            >
+              Customer Approved
+            </button>
+          </div>
+
+          {/* Reset Filters */}
+          {(search || completionDate || customerApproved !== undefined) && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+              title="Reset Filters"
+            >
+              <RotateCcw size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.tableCard}>
@@ -96,7 +223,11 @@ export default function DesignApprovalPage() {
               {isLoading ? (
                 <tr><td colSpan={7} style={{ textAlign: "center", padding: "24px" }}>Loading pending approvals...</td></tr>
               ) : pendingList.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: "center", padding: "32px" }}>No design proofs awaiting customer approval.</td></tr>
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "32px" }}>
+                    {customerApproved ? "No customer-approved design proofs found." : "No design proofs awaiting customer approval."}
+                  </td>
+                </tr>
               ) : (
                 pendingList.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
@@ -150,13 +281,19 @@ export default function DesignApprovalPage() {
                         </button>
 
                         {/* അപ്പ്രൂവൽ ആക്ഷൻ ബട്ടൺ 🌟 */}
-                        <button
-                          onClick={() => handleApprovalAction(item.project_id, true)}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
-                          title="Approve Design"
-                        >
-                          Approve
-                        </button>
+                        {customerApproved || item.customer_design_approval === true ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shadow-2xs">
+                            <Check size={11} className="stroke-[2.5]" /> Approved
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleApprovalAction(item.project_id, true)}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                            title="Approve Design"
+                          >
+                            Approve
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
