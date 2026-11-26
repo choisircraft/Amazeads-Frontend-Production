@@ -133,10 +133,10 @@ export default function OrderFilters({
           {/* Divider */}
           <div className="w-px h-3.5 bg-slate-200" />
 
-          {/* Completed Date */}
+          {/* Completion Date */}
           <div className="flex items-center gap-1.5">
             <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
-              Completed:
+              Completion Date:
             </span>
             <div className="relative flex items-center">
               <input

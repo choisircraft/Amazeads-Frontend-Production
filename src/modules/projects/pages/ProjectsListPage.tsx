@@ -220,7 +220,7 @@ export function ProjectsListPage({ role = "project-manager" }: { role?: UserRole
 
         {/* 🌟 Completion Date Filter */}
         <DateFilterDropdown
-          label="Completion"
+          label="Completion Date"
           value={completionDate}
           onChange={(val) => { setCompletionDate(val); setCurrentPage(1); }}
         />

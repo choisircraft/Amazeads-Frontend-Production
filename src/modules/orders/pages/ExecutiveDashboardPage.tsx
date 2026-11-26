@@ -390,7 +390,7 @@ export function ExecutiveDashboardPage({
         </div>
 
         <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 h-8">
-          <span className="text-[10px] uppercase text-slate-400 font-bold">Completion:</span>
+          <span className="text-[10px] uppercase text-slate-400 font-bold">Completion Date:</span>
           <input
             type="date"
             value={completionDate}

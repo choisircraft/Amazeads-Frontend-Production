@@ -34,7 +34,7 @@ export default function SalesProjectsPage() {
   const [designDate, setDesignDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [printingDate, setPrintingDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
   const [commitDate, setCommitDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
-  const [completedDate, setCompletedDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const [completionDate, setCompletionDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -74,7 +74,7 @@ export default function SalesProjectsPage() {
         Object.assign(activeFilters, buildDateRangeParams(printingDate, "printing_date", "printing_from_date", "printing_to_date"));
       }
       Object.assign(activeFilters, buildDateRangeParams(commitDate, "commit_date", "commit_from_date", "commit_to_date"));
-      Object.assign(activeFilters, buildDateRangeParams(completedDate, "completed_date", "completed_from_date", "completed_to_date"));
+      Object.assign(activeFilters, buildDateRangeParams(completionDate, "completion_date", "completion_from_date", "completion_to_date"));
 
       const data = await getAllSalesProjects(activeFilters);
       const items = data.items || [];
@@ -91,7 +91,7 @@ export default function SalesProjectsPage() {
 
   useEffect(() => {
     fetchProjects();
-  }, [currentPage, debouncedSearch, deptFilter, designDate, printingDate, commitDate, completedDate, selectedCategory]);
+  }, [currentPage, debouncedSearch, deptFilter, designDate, printingDate, commitDate, completionDate, selectedCategory]);
 
   const handleClearFilters = () => {
     setSearch("");
@@ -100,7 +100,7 @@ export default function SalesProjectsPage() {
     setDesignDate(EMPTY_DATE_FILTER);
     setPrintingDate(EMPTY_DATE_FILTER);
     setCommitDate(EMPTY_DATE_FILTER);
-    setCompletedDate(EMPTY_DATE_FILTER);
+    setCompletionDate(EMPTY_DATE_FILTER);
     setCurrentPage(1);
   };
 
@@ -228,15 +228,15 @@ export default function SalesProjectsPage() {
           onChange={(val) => { setCommitDate(val); setCurrentPage(1); }}
         />
 
-        {/* 🌟 Completed Date Filter */}
+        {/* 🌟 Completion Date Filter */}
         <DateFilterDropdown
-          label="Completed"
-          value={completedDate}
-          onChange={(val) => { setCompletedDate(val); setCurrentPage(1); }}
+          label="Completion Date"
+          value={completionDate}
+          onChange={(val) => { setCompletionDate(val); setCurrentPage(1); }}
         />
 
         {/* Reset Filters */}
-        {(search || deptFilter || hasDateFilter(designDate) || hasDateFilter(printingDate) || hasDateFilter(commitDate) || hasDateFilter(completedDate)) && (
+        {(search || deptFilter || hasDateFilter(designDate) || hasDateFilter(printingDate) || hasDateFilter(commitDate) || hasDateFilter(completionDate)) && (
           <button
             onClick={handleClearFilters}
             className="flex items-center gap-1 px-3 h-9 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer border border-rose-200 ml-auto"

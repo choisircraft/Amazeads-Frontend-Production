@@ -268,7 +268,7 @@ export default function ClosedOrdersPage() {
                 {/* Completion Date */}
                 <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
-                        Completed:
+                        Completion Date:
                     </span>
                     <div className="relative flex items-center">
                         <input
