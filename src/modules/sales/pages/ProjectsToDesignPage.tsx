@@ -218,16 +218,17 @@ export default function ProjectsToDesignPage() {
                 <th>PRODUCT</th>
                 <th style={{ width: "50px", textAlign: "center" }}>QTY</th>
                 <th style={{ width: "100px" }}>DESIGN DATE</th>
+                <th style={{ width: "135px", minWidth: "130px", textAlign: "center" }}>PROGRESS</th>
                 <th style={{ width: "100px" }}>TOTAL</th>
                 <th style={{ width: "65px", textAlign: "center" }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>Loading pending design queue...</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>Loading pending design queue...</td></tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold text-xs">
+                  <td colSpan={8} style={{ textAlign: "center", padding: "24px" }} className="text-slate-500 font-semibold text-xs">
                     {debouncedSearch ? `No projects found matching "${debouncedSearch}".` : "No projects mapped for selected date or filter."}
                   </td>
                 </tr>
@@ -297,6 +298,56 @@ export default function ProjectsToDesignPage() {
                             </td>
                             <td className="align-middle whitespace-nowrap text-xs text-slate-600">
                               {formatDateStyle(proj?.design_date || order.design_date)}
+                            </td>
+
+                            {/* Progress — 4 fixed positions, blank if not assigned */}
+                            <td className="align-middle" style={{ minWidth: "140px" }}>
+                              {(() => {
+                                const depts = proj?.departments || [];
+
+                                const deptConfig = [
+                                  { id: 1, label: "DS" },
+                                  { id: 2, label: "PR" },
+                                  { id: 3, label: "PD" },
+                                  { id: 4, label: "LG" },
+                                ];
+
+                                return (
+                                  <div className="flex items-center justify-center py-0.5">
+                                    <div className="flex items-center gap-1 text-[11px] font-bold">
+                                      {deptConfig.map(({ id, label }, idx) => {
+                                        const d = depts.find((x: any) => x.department_id === id || x.id === id);
+                                        const isAssigned = d?.is_assigned === true;
+                                        const isDone = d?.final_status === true;
+
+                                        const prevD = idx > 0 ? depts.find((x: any) => x.department_id === deptConfig[idx - 1].id || x.id === deptConfig[idx - 1].id) : null;
+                                        const prevAssigned = prevD?.is_assigned === true;
+                                        const prevDone = prevD?.final_status === true;
+
+                                        return (
+                                          <React.Fragment key={id}>
+                                            {idx > 0 && (
+                                              <span className={`w-3.5 h-[1.5px] -translate-y-[4px] ${prevAssigned && isAssigned && prevDone && isDone ? "bg-emerald-500" : "bg-slate-200"}`} />
+                                            )}
+                                            <div className="flex flex-col items-center w-5">
+                                              {isAssigned ? (
+                                                <span className={isDone ? "text-emerald-600 font-extrabold" : "text-rose-500 font-extrabold"}>
+                                                  {isDone ? "✓" : "✕"}
+                                                </span>
+                                              ) : (
+                                                <span className="text-transparent select-none">–</span>
+                                              )}
+                                              <span className={`text-[8px] font-extrabold mt-1 leading-none ${isAssigned ? "text-slate-500" : "text-slate-200"}`}>
+                                                {label}
+                                              </span>
+                                            </div>
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </td>
 
                             {/* Total Amount (RowSpan) */}
