@@ -524,8 +524,8 @@ export default function SalesPage() {
         </div>
       </div>
 
-      {/* ─── 2. Priority Action Required Strip (4 Alert Cards) ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* ─── 2. Priority Action Required Strip (Row 1: Orders & Delivery) ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* Card 1: Quotations to Follow-up */}
         <div
           onClick={() => router.push("/sales/list-quotation?from=overview")}
@@ -582,30 +582,11 @@ export default function SalesPage() {
             <CheckCircle size={16} />
           </div>
         </div>
-
-        {/* Card 4: Design Proofs Waiting */}
-        <div
-          onClick={() => router.push("/sales/design-approval")}
-          className="bg-white border border-indigo-200 hover:border-indigo-400 rounded-xl p-3 shadow-3xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between group"
-        >
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-black text-indigo-700">{designApprovalCount}</span>
-              <span className="text-xs font-bold text-slate-800">Design Proofs</span>
-            </div>
-            <p className="text-[10px] text-slate-450 font-medium truncate mt-0.5">
-              Customer approval required
-            </p>
-          </div>
-          <div className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-indigo-100">
-            <Palette size={16} />
-          </div>
-        </div>
       </div>
 
-      {/* ─── Row 2: Projects to Design & Projects to Print ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-        {/* Card 5: Projects to Design */}
+      {/* ─── Row 2: Projects to Design, Design Proofs & Projects to Print ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+        {/* Card 4: Projects to Design */}
         <div
           onClick={() => router.push("/sales/projects-to-design")}
           className="bg-white border border-sky-200 hover:border-sky-400 rounded-xl p-3 shadow-3xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between group"
@@ -623,6 +604,25 @@ export default function SalesPage() {
           </div>
           <div className="h-8 w-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-sky-100">
             <Paintbrush size={16} />
+          </div>
+        </div>
+
+        {/* Card 5: Design Proofs Waiting */}
+        <div
+          onClick={() => router.push("/sales/design-approval")}
+          className="bg-white border border-indigo-200 hover:border-indigo-400 rounded-xl p-3 shadow-3xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-between group"
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-black text-indigo-700">{designApprovalCount}</span>
+              <span className="text-xs font-bold text-slate-800">Design Proofs</span>
+            </div>
+            <p className="text-[10px] text-slate-450 font-medium truncate mt-0.5">
+              Customer approval required
+            </p>
+          </div>
+          <div className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-indigo-100">
+            <Palette size={16} />
           </div>
         </div>
 
