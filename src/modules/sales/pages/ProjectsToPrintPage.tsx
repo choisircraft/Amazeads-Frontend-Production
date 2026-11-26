@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Eye, Calendar, RotateCcw, Edit3, Search, X } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, { DateFilterValue } from "@/components/ui/DateFilterDropdown";
 import { useSalesStore } from "@/store/salesStore";
 import { CATEGORY_IDS } from "@/constants/categories";
 import { getProjectsToPrintList } from "../services/designApproval.service";
@@ -22,7 +23,11 @@ export default function ProjectsToPrintPage() {
 
   // 🌟 ഡിഫോൾട്ട് ആയി ഇന്നത്തെ തീയതി (YYYY-MM-DD) ഫിൽട്ടറിനായി നൽകുന്നു
   const getTodayDateStr = () => new Date().toISOString().split("T")[0];
-  const [printingDate, setPrintingDate] = useState<string>(getTodayDateStr());
+  const [printingDate, setPrintingDate] = useState<DateFilterValue>({
+    date: getTodayDateStr(),
+    from: "",
+    to: "",
+  });
 
   // 🌟 printing_task_assigned ഫിൽട്ടർ (default: false - Pending Assign)
   const [taskFilter, setTaskFilter] = useState<boolean | undefined>(false);
@@ -60,15 +65,17 @@ export default function ProjectsToPrintPage() {
       // 🌟 categoryId 5-ാമത്തെ പാരാമീറ്ററായി എടുക്കുന്നു
       const categoryId = selectedCategory?.id || CATEGORY_IDS.CRYSTAL_WALL_ART;
 
-      const targetDate = isUptoDate ? (printingDate || getTodayDateStr()) : printingDate;
+      const targetDate = isUptoDate ? (printingDate.date || printingDate.to || getTodayDateStr()) : printingDate.date;
+      const isRange = !isUptoDate && Boolean(printingDate.from || printingDate.to);
       const data = await getProjectsToPrintList(
         currentPage,
         5,
-        isUptoDate ? undefined : targetDate,
+        isUptoDate || isRange ? undefined : targetDate || undefined,
         taskFilter,
         categoryId,
-        isUptoDate ? targetDate : undefined,
-        debouncedSearch.trim() || undefined
+        isUptoDate ? targetDate : isRange ? printingDate.to || undefined : undefined,
+        debouncedSearch.trim() || undefined,
+        isRange ? printingDate.from || undefined : undefined
       );
 
       const items = data.items || [];
@@ -92,7 +99,7 @@ export default function ProjectsToPrintPage() {
   const handleResetFilters = () => {
     setSearch("");
     setDebouncedSearch("");
-    setPrintingDate(getTodayDateStr());
+    setPrintingDate({ date: getTodayDateStr(), from: "", to: "" });
     setTaskFilter(false);
     setIsUptoDate(false);
     setCurrentPage(1);
@@ -148,16 +155,17 @@ export default function ProjectsToPrintPage() {
           </div>
 
           {/* Printing Date Picker (Default Today) */}
-          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-            <Calendar size={13} className="text-indigo-600" />
-            <span className="text-[10px] uppercase text-slate-400 font-bold">Print Date:</span>
-            <input
-              type="date"
-              value={printingDate}
-              onChange={(e) => { setPrintingDate(e.target.value); setCurrentPage(1); }}
-              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-            />
-          </div>
+          <DateFilterDropdown
+            label="Print Date"
+            value={printingDate}
+            align="right"
+            triggerClassName="inline-flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs text-xs font-semibold cursor-pointer select-none hover:border-slate-300"
+            onChange={(val) => {
+              if (val.from || val.to) setIsUptoDate(false);
+              setPrintingDate(val);
+              setCurrentPage(1);
+            }}
+          />
 
           {/* Task Assigned Filter Buttons */}
           <div className="flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg">
@@ -190,7 +198,7 @@ export default function ProjectsToPrintPage() {
                 const checked = e.target.checked;
                 setIsUptoDate(checked);
                 if (checked) {
-                  setPrintingDate(getTodayDateStr());
+                  setPrintingDate({ date: getTodayDateStr(), from: "", to: "" });
                 }
                 setCurrentPage(1);
               }}

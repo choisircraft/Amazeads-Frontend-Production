@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Eye, Plus, Calendar, RotateCcw, Search, X, Check } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, { DateFilterValue } from "@/components/ui/DateFilterDropdown";
 import { getProjectsForDesignList, UserRole } from "@/modules/project-manager/services/managerOrder.service";
 import { useProjectManagerStore } from "@/store/projectManagerStore";
 import { CATEGORY_IDS } from "@/constants/categories";
@@ -37,7 +38,11 @@ export function ProductForDesignPage({ role = "project-manager" }: { role?: User
   }, [search]);
 
   const getTodayDateStr = () => new Date().toISOString().split("T")[0];
-  const [designDate, setDesignDate] = useState<string>(getTodayDateStr());
+  const [designDate, setDesignDate] = useState<DateFilterValue>({
+    date: getTodayDateStr(),
+    from: "",
+    to: "",
+  });
   const [taskFilter, setTaskFilter] = useState<boolean | undefined>(false);
   const [isUptoDate, setIsUptoDate] = useState<boolean>(false);
 
@@ -121,16 +126,18 @@ export function ProductForDesignPage({ role = "project-manager" }: { role?: User
   const fetchDesignProjects = async () => {
     setIsLoading(true);
     try {
-      const targetDate = isUptoDate ? (designDate || getTodayDateStr()) : designDate;
+      const targetDate = isUptoDate ? (designDate.date || designDate.to || getTodayDateStr()) : designDate.date;
+      const isRange = !isUptoDate && Boolean(designDate.from || designDate.to);
       const data = await getProjectsForDesignList(
         currentPage,
         5,
-        isUptoDate ? undefined : targetDate,
+        isUptoDate || isRange ? undefined : targetDate || undefined,
         taskFilter,
         role,
         activeCategoryId,
-        isUptoDate ? targetDate : undefined,
-        debouncedSearch.trim() || undefined
+        isUptoDate ? targetDate : isRange ? designDate.to || undefined : undefined,
+        debouncedSearch.trim() || undefined,
+        isRange ? designDate.from || undefined : undefined
       );
       const items = data.items || [];
 
@@ -151,7 +158,7 @@ export function ProductForDesignPage({ role = "project-manager" }: { role?: User
   const handleResetFilters = () => {
     setSearch("");
     setDebouncedSearch("");
-    setDesignDate(getTodayDateStr());
+    setDesignDate({ date: getTodayDateStr(), from: "", to: "" });
     setTaskFilter(false);
     setIsUptoDate(false);
     setCurrentPage(1);
@@ -187,16 +194,17 @@ export function ProductForDesignPage({ role = "project-manager" }: { role?: User
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-            <Calendar size={13} className="text-indigo-600" />
-            <span className="text-[10px] uppercase text-slate-400 font-bold">Design Date:</span>
-            <input
-              type="date"
-              value={designDate}
-              onChange={(e) => { setDesignDate(e.target.value); setCurrentPage(1); }}
-              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-            />
-          </div>
+          <DateFilterDropdown
+            label="Design Date"
+            value={designDate}
+            align="right"
+            triggerClassName="inline-flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs text-xs font-semibold cursor-pointer select-none hover:border-slate-300"
+            onChange={(val) => {
+              if (val.from || val.to) setIsUptoDate(false);
+              setDesignDate(val);
+              setCurrentPage(1);
+            }}
+          />
 
           <div className="flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg">
             <button
@@ -228,7 +236,7 @@ export function ProductForDesignPage({ role = "project-manager" }: { role?: User
                 const checked = e.target.checked;
                 setIsUptoDate(checked);
                 if (checked) {
-                  setDesignDate(getTodayDateStr());
+                  setDesignDate({ date: getTodayDateStr(), from: "", to: "" });
                 }
                 setCurrentPage(1);
               }}

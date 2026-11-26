@@ -94,11 +94,15 @@ export async function getProjectsForDesignList(
   role: UserRole = "project-manager",
   categoryId?: number,
   designToDate?: string,
-  search?: string
+  search?: string,
+  designFromDate?: string
 ): Promise<any> {
   const params: any = { page, page_size: pageSize };
   if (designDate) {
     params.design_date = designDate;
+  }
+  if (designFromDate) {
+    params.design_from_date = designFromDate;
   }
   if (designToDate) {
     params.design_to_date = designToDate;
@@ -126,11 +130,15 @@ export async function getProjectsForPrintList(
   role: UserRole = "project-manager",
   categoryId?: number,
   printingToDate?: string,
-  search?: string
+  search?: string,
+  printingFromDate?: string
 ): Promise<any> {
   const params: any = { page, page_size: pageSize };
   if (printingDate) {
     params.printing_date = printingDate;
+  }
+  if (printingFromDate) {
+    params.printing_from_date = printingFromDate;
   }
   if (printingToDate) {
     params.printing_to_date = printingToDate;

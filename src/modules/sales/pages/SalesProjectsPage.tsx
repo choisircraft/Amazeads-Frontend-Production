@@ -3,12 +3,19 @@
 import React, { useEffect, useState } from "react";
 import { Eye, Filter, RotateCcw, Edit3, Search, X } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, {
+  DateFilterValue,
+  EMPTY_DATE_FILTER,
+  buildDateRangeParams,
+  hasDateFilter,
+} from "@/components/ui/DateFilterDropdown";
 import { useSalesStore } from "@/store/salesStore";
 import { CATEGORY_IDS } from "@/constants/categories";
 import { getAllSalesProjects } from "../services/designApproval.service";
 import SalesProjectDetailsModal from "../components/SalesProjectDetailsModal";
 import UpdateProjectDatesModal from "../components/UpdateProjectDatesModal";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
+import ProjectProgressCell from "@/modules/projects/components/ProjectProgressCell";
 import styles from "../components/DesignApprovalComponents.module.css";
 import { formatDateStyle } from "@/lib/formatDate";
 
@@ -24,10 +31,10 @@ export default function SalesProjectsPage() {
   const [search, setSearch] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [deptFilter, setDeptFilter] = useState<string>("");
-  const [designDate, setDesignDate] = useState<string>("");
-  const [printingDate, setPrintingDate] = useState<string>("");
-  const [commitDate, setCommitDate] = useState<string>("");
-  const [completedDate, setCompletedDate] = useState<string>("");
+  const [designDate, setDesignDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const [printingDate, setPrintingDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const [commitDate, setCommitDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const [completedDate, setCompletedDate] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,10 +67,14 @@ export default function SalesProjectsPage() {
       };
       if (debouncedSearch.trim()) activeFilters.search = debouncedSearch.trim();
       if (deptFilter) activeFilters.department_id = parseInt(deptFilter);
-      if (designDate) activeFilters.design_date = designDate;
-      if (printingDate) activeFilters.printing_date = printingDate;
-      if (commitDate) activeFilters.commit_date = commitDate;
-      if (completedDate) activeFilters.completed_date = completedDate;
+      if (deptFilter === "1") {
+        Object.assign(activeFilters, buildDateRangeParams(designDate, "design_date", "design_from_date", "design_to_date"));
+      }
+      if (deptFilter === "2") {
+        Object.assign(activeFilters, buildDateRangeParams(printingDate, "printing_date", "printing_from_date", "printing_to_date"));
+      }
+      Object.assign(activeFilters, buildDateRangeParams(commitDate, "commit_date", "commit_from_date", "commit_to_date"));
+      Object.assign(activeFilters, buildDateRangeParams(completedDate, "completed_date", "completed_from_date", "completed_to_date"));
 
       const data = await getAllSalesProjects(activeFilters);
       const items = data.items || [];
@@ -86,10 +97,10 @@ export default function SalesProjectsPage() {
     setSearch("");
     setDebouncedSearch("");
     setDeptFilter("");
-    setDesignDate("");
-    setPrintingDate("");
-    setCommitDate("");
-    setCompletedDate("");
+    setDesignDate(EMPTY_DATE_FILTER);
+    setPrintingDate(EMPTY_DATE_FILTER);
+    setCommitDate(EMPTY_DATE_FILTER);
+    setCompletedDate(EMPTY_DATE_FILTER);
     setCurrentPage(1);
   };
 
@@ -126,35 +137,35 @@ export default function SalesProjectsPage() {
         {/* 🌟 Department Filter Tab Switcher Bar */}
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
           <button
-            onClick={() => { setDeptFilter(""); setCurrentPage(1); }}
+            onClick={() => { setDeptFilter(""); setDesignDate(EMPTY_DATE_FILTER); setPrintingDate(EMPTY_DATE_FILTER); setCurrentPage(1); }}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${deptFilter === "" ? "bg-indigo-600 text-white font-bold shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
           >
             All
           </button>
           <button
-            onClick={() => { setDeptFilter("1"); setCurrentPage(1); }}
+            onClick={() => { setDeptFilter("1"); setPrintingDate(EMPTY_DATE_FILTER); setCurrentPage(1); }}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${deptFilter === "1" ? "bg-indigo-600 text-white font-bold shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
           >
             Designing
           </button>
           <button
-            onClick={() => { setDeptFilter("2"); setCurrentPage(1); }}
+            onClick={() => { setDeptFilter("2"); setDesignDate(EMPTY_DATE_FILTER); setCurrentPage(1); }}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${deptFilter === "2" ? "bg-indigo-600 text-white font-bold shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
           >
             Printing
           </button>
           <button
-            onClick={() => { setDeptFilter("3"); setCurrentPage(1); }}
+            onClick={() => { setDeptFilter("3"); setDesignDate(EMPTY_DATE_FILTER); setPrintingDate(EMPTY_DATE_FILTER); setCurrentPage(1); }}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${deptFilter === "3" ? "bg-indigo-600 text-white font-bold shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
           >
             Production
           </button>
           <button
-            onClick={() => { setDeptFilter("4"); setCurrentPage(1); }}
+            onClick={() => { setDeptFilter("4"); setDesignDate(EMPTY_DATE_FILTER); setPrintingDate(EMPTY_DATE_FILTER); setCurrentPage(1); }}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${deptFilter === "4" ? "bg-indigo-600 text-white font-bold shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
           >
@@ -193,51 +204,39 @@ export default function SalesProjectsPage() {
         </div>
 
         {/* Design Date */}
-        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 h-9">
-          <span className="text-[10px] uppercase text-slate-400 font-bold">Design:</span>
-          <input
-            type="date"
+        {deptFilter === "1" && (
+          <DateFilterDropdown
+            label="Design"
             value={designDate}
-            onChange={(e) => { setDesignDate(e.target.value); setCurrentPage(1); }}
-            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            onChange={(val) => { setDesignDate(val); setCurrentPage(1); }}
           />
-        </div>
+        )}
 
         {/* Print Date */}
-        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 h-9">
-          <span className="text-[10px] uppercase text-slate-400 font-bold">Print:</span>
-          <input
-            type="date"
+        {deptFilter === "2" && (
+          <DateFilterDropdown
+            label="Print"
             value={printingDate}
-            onChange={(e) => { setPrintingDate(e.target.value); setCurrentPage(1); }}
-            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            onChange={(val) => { setPrintingDate(val); setCurrentPage(1); }}
           />
-        </div>
+        )}
 
         {/* Commit Date */}
-        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 h-9">
-          <span className="text-[10px] uppercase text-slate-400 font-bold">Commit:</span>
-          <input
-            type="date"
-            value={commitDate}
-            onChange={(e) => { setCommitDate(e.target.value); setCurrentPage(1); }}
-            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-          />
-        </div>
+        <DateFilterDropdown
+          label="Commit"
+          value={commitDate}
+          onChange={(val) => { setCommitDate(val); setCurrentPage(1); }}
+        />
 
         {/* 🌟 Completed Date Filter */}
-        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 h-9">
-          <span className="text-[10px] uppercase text-slate-400 font-bold">Completed:</span>
-          <input
-            type="date"
-            value={completedDate}
-            onChange={(e) => { setCompletedDate(e.target.value); setCurrentPage(1); }}
-            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-          />
-        </div>
+        <DateFilterDropdown
+          label="Completed"
+          value={completedDate}
+          onChange={(val) => { setCompletedDate(val); setCurrentPage(1); }}
+        />
 
         {/* Reset Filters */}
-        {(search || deptFilter || designDate || printingDate || commitDate || completedDate) && (
+        {(search || deptFilter || hasDateFilter(designDate) || hasDateFilter(printingDate) || hasDateFilter(commitDate) || hasDateFilter(completedDate)) && (
           <button
             onClick={handleClearFilters}
             className="flex items-center gap-1 px-3 h-9 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer border border-rose-200 ml-auto"
@@ -257,8 +256,8 @@ export default function SalesProjectsPage() {
                 <th style={{ width: "150px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
                 <th style={{ width: "50px", textAlign: "center" }}>QTY</th>
-                <th style={{ width: "100px" }}>COMMIT DATE</th>
                 <th style={{ width: "110px" }}>COMPLETION DATE</th>
+                <th style={{ width: "135px", minWidth: "130px", textAlign: "center" }}>PROGRESS</th>
                 <th style={{ width: "100px" }}>TOTAL</th>
                 <th style={{ width: "85px", textAlign: "center" }}>STATUS</th>
                 <th style={{ width: "65px", textAlign: "center" }}>ACTIONS</th>
@@ -335,17 +334,19 @@ export default function SalesProjectsPage() {
                               {proj ? proj.quantity : "—"}
                             </td>
 
-                            {/* Commit Date, Completion Date, Total Amount & Status (RowSpan — merged per order) */}
+                            {/* Completion Date (RowSpan — merged per order) */}
+                            {isFirstRow && (
+                              <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
+                                {formatDateStyle(order.completion_date || proj?.completed_date || proj?.completion_date)}
+                              </td>
+                            )}
+
+                            {/* Progress (per project) */}
+                            <ProjectProgressCell departments={proj?.departments} />
+
+                            {/* Total Amount & Status (RowSpan — merged per order) */}
                             {isFirstRow && (
                               <>
-                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                  {formatDateStyle(order.commit_date || proj?.commit_date)}
-                                </td>
-
-                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
-                                  {formatDateStyle(order.completion_date || proj?.completed_date || proj?.completion_date)}
-                                </td>
-
                                 <td rowSpan={projectsCount} style={{ fontWeight: 700 }} className="align-middle whitespace-nowrap">
                                   ₹{totalProjectsAmount.toLocaleString("en-IN")}
                                 </td>
