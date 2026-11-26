@@ -133,19 +133,6 @@ export default function DateFilterDropdown({
   const active = hasDateFilter(value);
   const summaryText = formatFilterSummary(value);
 
-  const todayStr = toLocalYmd(new Date());
-  const yesterdayDate = new Date();
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = toLocalYmd(yesterdayDate);
-
-  const last7Start = new Date();
-  last7Start.setDate(last7Start.getDate() - 6);
-  const last7FromStr = toLocalYmd(last7Start);
-
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  const monthStartStr = toLocalYmd(monthStart);
-
   const handleClear = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     onChange(EMPTY_DATE_FILTER);
@@ -259,124 +246,58 @@ export default function DateFilterDropdown({
           </div>
 
           {mode === "single" ? (
-            <div className="space-y-2.5">
+            <div>
+              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                Exact Date
+              </label>
+              <input
+                type="date"
+                value={value.date}
+                onChange={(e) =>
+                  onChange({ date: e.target.value, from: "", to: "" })
+                }
+                className="w-full h-9 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
-                  Exact Date
+                  From Date
                 </label>
                 <input
                   type="date"
-                  value={value.date}
-                  onChange={(e) =>
-                    onChange({ date: e.target.value, from: "", to: "" })
-                  }
-                  className="w-full h-9 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
+                  value={value.from}
+                  max={value.to || undefined}
+                  onChange={(e) => {
+                    const nextFrom = e.target.value;
+                    onChange({
+                      date: "",
+                      from: nextFrom,
+                      to: value.to && nextFrom && value.to < nextFrom ? nextFrom : value.to,
+                    });
+                  }}
+                  className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
                 />
               </div>
-
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange({ date: todayStr, from: "", to: "" });
-                    setIsOpen(false);
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                  To Date
+                </label>
+                <input
+                  type="date"
+                  value={value.to}
+                  min={value.from || undefined}
+                  onChange={(e) => {
+                    const nextTo = e.target.value;
+                    onChange({
+                      date: "",
+                      from: value.from && nextTo && value.from > nextTo ? nextTo : value.from,
+                      to: nextTo,
+                    });
                   }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${
-                    value.date === todayStr
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  Today
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange({ date: yesterdayStr, from: "", to: "" });
-                    setIsOpen(false);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${
-                    value.date === yesterdayStr
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  Yesterday
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
-                    From Date
-                  </label>
-                  <input
-                    type="date"
-                    value={value.from}
-                    max={value.to || undefined}
-                    onChange={(e) => {
-                      const nextFrom = e.target.value;
-                      onChange({
-                        date: "",
-                        from: nextFrom,
-                        to: value.to && nextFrom && value.to < nextFrom ? nextFrom : value.to,
-                      });
-                    }}
-                    className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
-                    To Date
-                  </label>
-                  <input
-                    type="date"
-                    value={value.to}
-                    min={value.from || undefined}
-                    onChange={(e) => {
-                      const nextTo = e.target.value;
-                      onChange({
-                        date: "",
-                        from: value.from && nextTo && value.from > nextTo ? nextTo : value.from,
-                        to: nextTo,
-                      });
-                    }}
-                    className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange({ date: "", from: last7FromStr, to: todayStr });
-                    setIsOpen(false);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${
-                    value.from === last7FromStr && value.to === todayStr
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  Last 7 Days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange({ date: "", from: monthStartStr, to: todayStr });
-                    setIsOpen(false);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${
-                    value.from === monthStartStr && value.to === todayStr
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  This Month
-                </button>
+                  className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
+                />
               </div>
             </div>
           )}
