@@ -17,6 +17,12 @@ import {
   User,
 } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, {
+  DateFilterValue,
+  EMPTY_DATE_FILTER,
+  buildDateRangeParams,
+  hasDateFilter,
+} from "@/components/ui/DateFilterDropdown";
 import {
   getPMOrders,
   getPMNewOrders,
@@ -85,8 +91,8 @@ export function ExecutiveDashboardPage({
   // Filters
   const [searchOrder, setSearchOrder] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
-  const [commitDate, setCommitDate] = useState("");
-  const [completionDate, setCompletionDate] = useState("");
+  const [commitDateFilter, setCommitDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const [completionDateFilter, setCompletionDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
   // Modal
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
@@ -123,6 +129,11 @@ export function ExecutiveDashboardPage({
       fetchKpis();
       let res: any = null;
 
+      const extraDateParams = {
+        ...buildDateRangeParams(commitDateFilter, "commit_date", "commit_from_date", "commit_to_date"),
+        ...buildDateRangeParams(completionDateFilter, "completion_date", "completion_from_date", "completion_to_date"),
+      };
+
       switch (activeTab) {
         case "new":
           res = await getPMNewOrders(currentPage, 5, role, activeCategoryId);
@@ -132,10 +143,13 @@ export function ExecutiveDashboardPage({
             currentPage,
             5,
             "In Progress",
-            commitDate,
-            completionDate,
+            undefined,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            extraDateParams
           );
           break;
         case "packed":
@@ -143,10 +157,13 @@ export function ExecutiveDashboardPage({
             currentPage,
             5,
             "Packed",
-            commitDate,
-            completionDate,
+            undefined,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            extraDateParams
           );
           break;
         case "in-transit":
@@ -154,10 +171,13 @@ export function ExecutiveDashboardPage({
             currentPage,
             5,
             "In Transit",
-            commitDate,
-            completionDate,
+            undefined,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            extraDateParams
           );
           break;
         case "delivered":
@@ -165,10 +185,13 @@ export function ExecutiveDashboardPage({
             currentPage,
             5,
             "Delivered",
-            commitDate,
-            completionDate,
+            undefined,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            extraDateParams
           );
           break;
         case "closed":
@@ -176,10 +199,13 @@ export function ExecutiveDashboardPage({
             currentPage,
             5,
             "Closed",
-            commitDate,
-            completionDate,
+            undefined,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            extraDateParams
           );
           break;
         case "cancelled":
@@ -187,23 +213,31 @@ export function ExecutiveDashboardPage({
             currentPage,
             5,
             "Cancelled",
-            commitDate,
-            completionDate,
+            undefined,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            extraDateParams
           );
           break;
         case "dispatch":
-          // Orders To Dispatch — filter by today's date for completion_date automatically
-          const targetDispatchDate = completionDate || getTodayDateStr();
+          // Orders To Dispatch — filter by today's date for completion_date automatically if unset
+          const dispatchDateParams = hasDateFilter(completionDateFilter)
+            ? buildDateRangeParams(completionDateFilter, "completion_date", "completion_from_date", "completion_to_date")
+            : { completion_date: getTodayDateStr() };
           res = await getPMOrders(
             currentPage,
             5,
             "",
             "",
-            targetDispatchDate,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            dispatchDateParams
           );
           break;
         case "all":
@@ -212,10 +246,13 @@ export function ExecutiveDashboardPage({
             currentPage,
             5,
             "",
-            commitDate,
-            completionDate,
+            undefined,
+            undefined,
             role,
-            activeCategoryId
+            activeCategoryId,
+            undefined,
+            undefined,
+            extraDateParams
           );
           break;
       }
@@ -253,7 +290,7 @@ export function ExecutiveDashboardPage({
 
   useEffect(() => {
     fetchOrdersData();
-  }, [activeTab, currentPage, commitDate, completionDate, searchOrder, searchCustomer, selectedCategory]);
+  }, [activeTab, currentPage, commitDateFilter, completionDateFilter, searchOrder, searchCustomer, selectedCategory]);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -263,8 +300,8 @@ export function ExecutiveDashboardPage({
   const handleResetFilters = () => {
     setSearchOrder("");
     setSearchCustomer("");
-    setCommitDate("");
-    setCompletionDate("");
+    setCommitDateFilter(EMPTY_DATE_FILTER);
+    setCompletionDateFilter(EMPTY_DATE_FILTER);
     setCurrentPage(1);
   };
 
@@ -379,27 +416,19 @@ export function ExecutiveDashboardPage({
           className="h-8 border border-slate-200 rounded-lg px-2.5 bg-white text-xs focus:outline-none"
         />
 
-        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 h-8">
-          <span className="text-[10px] uppercase text-slate-400 font-bold">Commit:</span>
-          <input
-            type="date"
-            value={commitDate}
-            onChange={(e) => setCommitDate(e.target.value)}
-            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-          />
-        </div>
+        <DateFilterDropdown
+          label="Commit"
+          value={commitDateFilter}
+          onChange={(val) => { setCommitDateFilter(val); setCurrentPage(1); }}
+        />
 
-        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 h-8">
-          <span className="text-[10px] uppercase text-slate-400 font-bold">Completion Date:</span>
-          <input
-            type="date"
-            value={completionDate}
-            onChange={(e) => setCompletionDate(e.target.value)}
-            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-          />
-        </div>
+        <DateFilterDropdown
+          label="Completion Date"
+          value={completionDateFilter}
+          onChange={(val) => { setCompletionDateFilter(val); setCurrentPage(1); }}
+        />
 
-        {(searchOrder || searchCustomer || commitDate || completionDate) && (
+        {(searchOrder || searchCustomer || hasDateFilter(commitDateFilter) || hasDateFilter(completionDateFilter)) && (
           <button
             onClick={handleResetFilters}
             className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer ml-auto"

@@ -3,13 +3,31 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle2, DollarSign, Eye, Search, X } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
-import { getCourierOrders } from "@/modules/project-manager/services/courierTracking.service";
-import { UserRole } from "@/modules/project-manager/services/managerOrder.service";
+import DateFilterDropdown, {
+  DateFilterValue,
+  EMPTY_DATE_FILTER,
+  buildDateRangeParams,
+} from "@/components/ui/DateFilterDropdown";
+import { getPMOrders, UserRole } from "@/modules/project-manager/services/managerOrder.service";
 import { useProjectManagerStore } from "@/store/projectManagerStore";
 import { CATEGORY_IDS } from "@/constants/categories";
 import ViewOrderModal from "@/modules/sales/components/ViewOrderModal";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
+import { formatDateStyle } from "@/lib/formatDate";
 import styles from "@/modules/project-manager/components/PMOrderComponents.module.css";
+
+function getPaymentBadgeClass(status?: string) {
+  switch (status?.toLowerCase()) {
+    case "paid":
+      return "bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider inline-block";
+    case "partial":
+      return "bg-amber-50 text-amber-700 border border-amber-200 font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider inline-block";
+    case "pending":
+      return "bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider inline-block";
+    default:
+      return "bg-slate-50 text-slate-600 border border-slate-200 font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider inline-block";
+  }
+}
 
 // 🌟 Delay status badge based on completion_date & completed_date
 function getDelayStatusBadge(completionDateStr?: string | null, completedDateStr?: string | null) {
@@ -91,9 +109,11 @@ export function ClosedOrdersPage({ role = "project-manager" }: { role?: UserRole
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 🌟 Search across all text fields
+  // 🌟 Search & Date Filters
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [commitDateFilter, setCommitDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const [completionDateFilter, setCompletionDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -110,9 +130,22 @@ export function ClosedOrdersPage({ role = "project-manager" }: { role?: UserRole
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const filters: any = { category_id: activeCategoryId };
-      if (debouncedSearch.trim()) filters.search = debouncedSearch.trim();
-      const data = await getCourierOrders(currentPage, 5, "Closed", filters, role);
+      const extraDateParams = {
+        ...buildDateRangeParams(commitDateFilter, "commit_date", "commit_from_date", "commit_to_date"),
+        ...buildDateRangeParams(completionDateFilter, "completion_date", "completion_from_date", "completion_to_date"),
+      };
+      const data = await getPMOrders(
+        currentPage,
+        5,
+        "Closed",
+        undefined,
+        undefined,
+        role,
+        activeCategoryId,
+        undefined,
+        debouncedSearch.trim() || undefined,
+        extraDateParams
+      );
       setOrders(data.items || []);
       setTotalPages(data.pagination?.total_pages || 1);
       setTotalCount(data.pagination?.total_count || (data.items || []).length);
@@ -125,7 +158,7 @@ export function ClosedOrdersPage({ role = "project-manager" }: { role?: UserRole
 
   useEffect(() => {
     fetchOrders();
-  }, [currentPage, selectedCategory, debouncedSearch]);
+  }, [currentPage, selectedCategory, debouncedSearch, commitDateFilter, completionDateFilter, role]);
 
   const totalRevenue = orders.reduce((sum, o) => sum + (o.final_amount || 0), 0);
 
@@ -159,26 +192,42 @@ export function ClosedOrdersPage({ role = "project-manager" }: { role?: UserRole
         </div>
       </div>
 
-      {/* 🌟 Search Input Bar */}
+      {/* 🌟 Search & Date Filters Bar */}
       <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs flex items-center justify-between gap-3 my-4 flex-wrap">
-        <div className="relative flex items-center min-w-[240px] sm:w-80">
-          <Search size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search orders, customer, phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-8 h-9 text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex items-center min-w-[240px] sm:w-72">
+            <Search size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search orders, customer, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-8 h-9 text-xs font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <DateFilterDropdown
+            label="Commit"
+            value={commitDateFilter}
+            onChange={(val) => { setCommitDateFilter(val); setCurrentPage(1); }}
+            badgeClassName="inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
           />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-              title="Clear search"
-            >
-              <X size={14} />
-            </button>
-          )}
+
+          <DateFilterDropdown
+            label="Completion Date"
+            value={completionDateFilter}
+            onChange={(val) => { setCompletionDateFilter(val); setCurrentPage(1); }}
+            badgeClassName="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
+          />
         </div>
         <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
           Total {totalCount} closed orders
@@ -194,19 +243,18 @@ export function ClosedOrdersPage({ role = "project-manager" }: { role?: UserRole
                 <th style={{ width: "110px" }}>ORDER NUMBER</th>
                 <th style={{ width: "160px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
+                <th style={{ width: "110px" }}>COMMIT DATE</th>
                 <th style={{ width: "120px" }}>COMPLETION DATE</th>
-                <th style={{ width: "140px" }}>TRACKING ID</th>
-                <th style={{ width: "140px" }}>DELIVERY TYPE</th>
                 <th style={{ width: "120px" }}>FINAL AMOUNT</th>
-                <th style={{ width: "110px", textAlign: "center" }}>CLOSED STATUS</th>
+                <th style={{ width: "100px", textAlign: "center" }}>PAYMENT</th>
                 <th style={{ width: "60px", textAlign: "center" }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={9} className="text-center py-10 font-semibold text-slate-500">Loading closed orders...</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 font-semibold text-slate-500">Loading closed orders...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-10 font-semibold text-slate-500">No delivered orders found in history.</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 font-semibold text-slate-500">No delivered orders found in history.</td></tr>
               ) : (
                 orders.map((order) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
@@ -268,17 +316,18 @@ export function ClosedOrdersPage({ role = "project-manager" }: { role?: UserRole
                             {isFirstRow && (
                               <>
                                 <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
+                                  {formatDateStyle(order.commit_date)}
+                                </td>
+                                <td rowSpan={projectsCount} className="align-middle whitespace-nowrap text-xs text-slate-600">
                                   <div className="flex flex-col items-start">
                                     <span>{order.completion_date ? order.completion_date.split("T")[0] : "—"}</span>
                                     {getDelayStatusBadge(order.completion_date, order.completed_date || order.completed_on)}
                                   </div>
                                 </td>
-                                <td rowSpan={projectsCount} className="font-mono text-slate-600 align-middle">{order.tracking_id || "—"}</td>
-                                <td rowSpan={projectsCount} className="font-semibold text-slate-700 capitalize align-middle">{order.delivery_type_name || "—"}</td>
                                 <td rowSpan={projectsCount} className="font-extrabold text-slate-900 align-middle">₹{(order.final_amount || 0).toLocaleString("en-IN")}</td>
-                                <td rowSpan={projectsCount} className="text-center align-middle">
-                                  <span className="px-3 py-1 text-xs font-extrabold rounded-lg bg-red-50 text-red-700 border border-red-200 inline-flex items-center gap-1">
-                                    <CheckCircle2 size={13} /> Closed
+                                <td rowSpan={projectsCount} style={{ textAlign: "center" }} className="align-middle">
+                                  <span className={getPaymentBadgeClass(order.payment_status)}>
+                                    {order.payment_status || "Pending"}
                                   </span>
                                 </td>
                                 <td rowSpan={projectsCount} className="text-center align-middle">

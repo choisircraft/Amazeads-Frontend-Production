@@ -13,7 +13,8 @@ export async function getPMOrders(
   role: UserRole = "project-manager",
   categoryId?: number,
   hasOrderNumber?: boolean,
-  search?: string
+  search?: string,
+  extraParams?: Record<string, any>
 ): Promise<any> {
   const params: any = { page, page_size: pageSize };
   if (hasOrderNumber !== undefined) {
@@ -24,6 +25,7 @@ export async function getPMOrders(
   if (completionDate) params.completion_date = completionDate;
   if (categoryId) params.category_id = categoryId;
   if (search) params.search = search;
+  if (extraParams) Object.assign(params, extraParams);
   const response = await api.get(`/${role}/orders`, { params });
   return response.data;
 }

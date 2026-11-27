@@ -4,6 +4,10 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Eye, Edit2, Calendar, Clock, Search, X } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, {
+    DateFilterValue,
+    buildDateRangeParams,
+} from "@/components/ui/DateFilterDropdown";
 import { OrderItemResponse } from "../types";
 import { getOrdersList } from "../services/order.service";
 import ViewOrderModal from "../components/ViewOrderModal";
@@ -35,9 +39,11 @@ export default function OrderDispatchPage() {
     }, [search]);
 
     // Default date to today's local date
-    const [completionDate, setCompletionDate] = useState<string>(
-        new Date().toLocaleDateString("en-CA") // "YYYY-MM-DD" formatted using local timezone
-    );
+    const [completionDateFilter, setCompletionDateFilter] = useState<DateFilterValue>({
+        date: new Date().toLocaleDateString("en-CA"), // "YYYY-MM-DD" formatted using local timezone
+        from: "",
+        to: "",
+    });
     const [mobileSearch, setMobileSearch] = useState("");
 
     // Modal states
@@ -64,7 +70,15 @@ export default function OrderDispatchPage() {
 
             if (debouncedSearch.trim()) activeFilters.search = debouncedSearch.trim();
             if (mobileSearch.trim()) activeFilters.mobile_number = mobileSearch.trim();
-            if (completionDate) activeFilters.completion_date = completionDate;
+            Object.assign(
+                activeFilters,
+                buildDateRangeParams(
+                    completionDateFilter,
+                    "completion_date",
+                    "completion_from_date",
+                    "completion_to_date"
+                )
+            );
 
             const data = await getOrdersList(activeFilters);
             setOrders(data.items || []);
@@ -83,7 +97,7 @@ export default function OrderDispatchPage() {
     }, [
         currentPage,
         selectedCategory,
-        completionDate,
+        completionDateFilter,
         debouncedSearch,
         mobileSearch
     ]);
@@ -93,8 +107,8 @@ export default function OrderDispatchPage() {
         setCurrentPage(1);
     };
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCompletionDate(e.target.value);
+    const handleCompletionDateFilter = (val: DateFilterValue) => {
+        setCompletionDateFilter(val);
         setCurrentPage(1);
     };
 
@@ -131,18 +145,16 @@ export default function OrderDispatchPage() {
             {/* Filters Area */}
             <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm mb-6 mt-4">
                 <div className="flex flex-col md:flex-row gap-4 items-end">
-                    <div className="w-full md:w-64">
+                    <div className="w-full md:w-auto">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
                             Completion Date
                         </label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                value={completionDate}
-                                onChange={handleDateChange}
-                                className="w-full h-10 pl-3 pr-4 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 text-slate-800"
-                            />
-                        </div>
+                        <DateFilterDropdown
+                            label="Completion Date"
+                            value={completionDateFilter}
+                            onChange={handleCompletionDateFilter}
+                            triggerClassName="inline-flex items-center gap-2 h-10 px-3 border border-slate-200 rounded-lg text-sm font-semibold bg-slate-50 text-slate-800 hover:bg-white hover:border-slate-300 cursor-pointer select-none"
+                        />
                     </div>
                     <div className="w-full md:w-72">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">

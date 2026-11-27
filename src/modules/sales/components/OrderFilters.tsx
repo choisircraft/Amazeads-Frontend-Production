@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, X, ChevronDown, Check } from "lucide-react";
+import DateFilterDropdown, { DateFilterValue } from "@/components/ui/DateFilterDropdown";
 import { SalesOrderStatusData } from "../types";
 
 interface OrderFiltersProps {
@@ -8,10 +9,10 @@ interface OrderFiltersProps {
   orderStatus: string;
   setOrderStatus: (val: string) => void;
   onClear?: () => void;
-  commitToDate?: string;
-  setCommitToDate?: (val: string) => void;
-  completionDate?: string;
-  setCompletionDate?: (val: string) => void;
+  commitDateFilter?: DateFilterValue;
+  setCommitDateFilter?: (val: DateFilterValue) => void;
+  completionDateFilter?: DateFilterValue;
+  setCompletionDateFilter?: (val: DateFilterValue) => void;
   kpiData?: SalesOrderStatusData | null;
 }
 
@@ -28,10 +29,10 @@ export default function OrderFilters({
   setSearch,
   orderStatus,
   setOrderStatus,
-  commitToDate,
-  setCommitToDate,
-  completionDate,
-  setCompletionDate,
+  commitDateFilter,
+  setCommitDateFilter,
+  completionDateFilter,
+  setCompletionDateFilter,
   kpiData,
 }: OrderFiltersProps) {
   const [ongoingDropdownOpen, setOngoingDropdownOpen] = useState(false);
@@ -103,60 +104,20 @@ export default function OrderFilters({
       </div>
 
       {/* Date Filters inside the row */}
-      {setCommitToDate && setCompletionDate && (
-        <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/60 rounded-xl px-3 py-1.5 flex-wrap">
-          {/* Commit Date */}
-          <div className="flex items-center gap-1.5">
-            <span className="bg-indigo-50 text-indigo-600 border border-indigo-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
-              Commit:
-            </span>
-            <div className="relative flex items-center">
-              <input
-                type="date"
-                value={commitToDate || ""}
-                onChange={(e) => setCommitToDate(e.target.value)}
-                className="border-none outline-none text-[11px] font-semibold text-slate-600 bg-transparent cursor-pointer"
-                style={{ paddingRight: commitToDate ? "14px" : "0" }}
-              />
-              {commitToDate && (
-                <button
-                  type="button"
-                  onClick={() => setCommitToDate("")}
-                  className="absolute right-0 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none p-0"
-                >
-                  <X size={10} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="w-px h-3.5 bg-slate-200" />
-
-          {/* Completion Date */}
-          <div className="flex items-center gap-1.5">
-            <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
-              Completion Date:
-            </span>
-            <div className="relative flex items-center">
-              <input
-                type="date"
-                value={completionDate || ""}
-                onChange={(e) => setCompletionDate(e.target.value)}
-                className="border-none outline-none text-[11px] font-semibold text-slate-600 bg-transparent cursor-pointer"
-                style={{ paddingRight: completionDate ? "14px" : "0" }}
-              />
-              {completionDate && (
-                <button
-                  type="button"
-                  onClick={() => setCompletionDate("")}
-                  className="absolute right-0 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none p-0"
-                >
-                  <X size={10} />
-                </button>
-              )}
-            </div>
-          </div>
+      {commitDateFilter && setCommitDateFilter && completionDateFilter && setCompletionDateFilter && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateFilterDropdown
+            label="Commit"
+            value={commitDateFilter}
+            onChange={setCommitDateFilter}
+            badgeClassName="bg-indigo-50 text-indigo-600 border border-indigo-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap"
+          />
+          <DateFilterDropdown
+            label="Completion Date"
+            value={completionDateFilter}
+            onChange={setCompletionDateFilter}
+            badgeClassName="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap"
+          />
         </div>
       )}
 

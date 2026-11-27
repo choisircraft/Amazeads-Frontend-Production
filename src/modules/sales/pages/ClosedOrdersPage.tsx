@@ -3,7 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { Eye, CheckCircle2, DollarSign, Calendar, X, Search } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, {
+    DateFilterValue,
+    EMPTY_DATE_FILTER,
+    buildDateRangeParams,
+} from "@/components/ui/DateFilterDropdown";
 import { getPMOrders } from "@/modules/project-manager/services/managerOrder.service";
+import { useSalesStore } from "@/store/salesStore";
+import { CATEGORY_IDS } from "@/constants/categories";
 import ViewOrderModal from "../components/ViewOrderModal";
 import OrderDelayStatusBadge from "../components/OrderDelayStatusBadge";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
@@ -11,6 +18,9 @@ import styles from "../components/OrderListComponents.module.css";
 import { formatDateStyle } from "@/lib/formatDate";
 
 export default function ClosedOrdersPage() {
+    const { selectedCategory } = useSalesStore();
+    const activeCategoryId = selectedCategory?.id || CATEGORY_IDS.CRYSTAL_WALL_ART;
+
     const [orders, setOrders] = useState<any[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -30,8 +40,8 @@ export default function ClosedOrdersPage() {
     }, [search]);
 
     // Date Filter States
-    const [commitToDate, setCommitToDate] = useState("");
-    const [completionDate, setCompletionDate] = useState("");
+    const [commitDateFilter, setCommitDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+    const [completionDateFilter, setCompletionDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
     // Modal State
     const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
@@ -41,17 +51,22 @@ export default function ClosedOrdersPage() {
     const fetchClosedOrders = async () => {
         setIsLoading(true);
         try {
+            const extraDateParams = {
+                ...buildDateRangeParams(commitDateFilter, "commit_date", "commit_from_date", "commit_to_date"),
+                ...buildDateRangeParams(completionDateFilter, "completion_date", "completion_from_date", "completion_to_date"),
+            };
             // 🌟 Fetch Closed Orders using getPMOrders
             const data = await getPMOrders(
                 currentPage,
                 5,
                 "Closed",
-                commitToDate,
-                completionDate,
+                undefined,
+                undefined,
                 "sales",
+                activeCategoryId,
                 undefined,
-                undefined,
-                debouncedSearch.trim() || undefined
+                debouncedSearch.trim() || undefined,
+                extraDateParams
             );
             setOrders(data.items || []);
             setTotalPages(data.pagination?.total_pages || 1);
@@ -66,15 +81,15 @@ export default function ClosedOrdersPage() {
     useEffect(() => {
         fetchClosedOrders();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPage, commitToDate, completionDate, debouncedSearch]);
+    }, [currentPage, activeCategoryId, commitDateFilter, completionDateFilter, debouncedSearch]);
 
-    const handleCommitToDate = (val: string) => {
-        setCommitToDate(val);
+    const handleCommitDateFilter = (val: DateFilterValue) => {
+        setCommitDateFilter(val);
         setCurrentPage(1);
     };
 
-    const handleCompletionDate = (val: string) => {
-        setCompletionDate(val);
+    const handleCompletionDateFilter = (val: DateFilterValue) => {
+        setCompletionDateFilter(val);
         setCurrentPage(1);
     };
 
@@ -170,57 +185,23 @@ export default function ClosedOrdersPage() {
                 <div className="w-px h-4 bg-slate-200" />
 
                 {/* Commit Date */}
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
-                        Commit:
-                    </span>
-                    <div className="relative flex items-center">
-                        <input
-                            type="date"
-                            value={commitToDate}
-                            onChange={(e) => handleCommitToDate(e.target.value)}
-                            className="border-none outline-none text-xs text-slate-600 bg-transparent cursor-pointer"
-                            style={{ paddingRight: commitToDate ? "18px" : "0" }}
-                        />
-                        {commitToDate && (
-                            <button
-                                type="button"
-                                onClick={() => handleCommitToDate("")}
-                                className="absolute right-0 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none p-0"
-                            >
-                                <X size={11} />
-                            </button>
-                        )}
-                    </div>
-                </div>
+                <DateFilterDropdown
+                    label="Commit"
+                    value={commitDateFilter}
+                    onChange={handleCommitDateFilter}
+                    badgeClassName="inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
+                />
 
                 {/* Divider */}
                 <div className="w-px h-4 bg-slate-200" />
 
                 {/* Completion Date */}
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
-                        Completion Date:
-                    </span>
-                    <div className="relative flex items-center">
-                        <input
-                            type="date"
-                            value={completionDate}
-                            onChange={(e) => handleCompletionDate(e.target.value)}
-                            className="border-none outline-none text-xs text-slate-600 bg-transparent cursor-pointer"
-                            style={{ paddingRight: completionDate ? "18px" : "0" }}
-                        />
-                        {completionDate && (
-                            <button
-                                type="button"
-                                onClick={() => handleCompletionDate("")}
-                                className="absolute right-0 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none p-0"
-                            >
-                                <X size={11} />
-                            </button>
-                        )}
-                    </div>
-                </div>
+                <DateFilterDropdown
+                    label="Completion Date"
+                    value={completionDateFilter}
+                    onChange={handleCompletionDateFilter}
+                    badgeClassName="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
+                />
             </div>
 
             {/* Orders Table */}

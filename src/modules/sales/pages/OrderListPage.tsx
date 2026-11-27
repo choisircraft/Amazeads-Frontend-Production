@@ -4,6 +4,11 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Eye, Edit2, X, ArrowLeft } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import {
+  DateFilterValue,
+  EMPTY_DATE_FILTER,
+  buildDateRangeParams,
+} from "@/components/ui/DateFilterDropdown";
 import { OrderItemResponse, SalesOrderStatusData } from "../types";
 import { getOrdersList } from "../services/order.service";
 import { getSalesOrderStatusKpi } from "../services/salesKpi.service";
@@ -84,8 +89,16 @@ useEffect(() => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [orderStatus, setOrderStatus] = useState(initialOrderStatus);
   const [paymentStatus, setPaymentStatus] = useState(initialPaymentStatus);
-  const [commitToDate, setCommitToDate] = useState(initialCommitDate);
-  const [completionDate, setCompletionDate] = useState(initialCompletionDate);
+  const [commitDateFilter, setCommitDateFilter] = useState<DateFilterValue>({
+    date: initialCommitDate,
+    from: "",
+    to: "",
+  });
+  const [completionDateFilter, setCompletionDateFilter] = useState<DateFilterValue>({
+    date: initialCompletionDate,
+    from: "",
+    to: "",
+  });
   const [deliveryTypeId, setDeliveryTypeId] = useState("");
   const [priceCategoryId, setPriceCategoryId] = useState("");
   const [completionDateAsc, setCompletionDateAsc] = useState(false);
@@ -103,8 +116,8 @@ useEffect(() => {
       }
     }
     const qCompletionDate = searchParams.get("completion_date");
-    if (qCompletionDate !== null && qCompletionDate !== completionDate) {
-      setCompletionDate(qCompletionDate);
+    if (qCompletionDate !== null && qCompletionDate !== completionDateFilter.date) {
+      setCompletionDateFilter({ date: qCompletionDate, from: "", to: "" });
       setCurrentPage(1);
     }
     const qCompletionDateAsc = searchParams.get("completion_date_asc");
@@ -141,8 +154,8 @@ useEffect(() => {
           category_id: selectedCategory?.id || CATEGORY_IDS.CRYSTAL_WALL_ART,
           ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
           ...(paymentStatus ? { payment_status: paymentStatus } : {}),
-          ...(commitToDate ? { commit_date: commitToDate } : {}),
-          ...(completionDate ? { completion_date: completionDate } : {}),
+          ...buildDateRangeParams(commitDateFilter, "commit_date", "commit_from_date", "commit_to_date"),
+          ...buildDateRangeParams(completionDateFilter, "completion_date", "completion_from_date", "completion_to_date"),
           ...(deliveryTypeId ? { delivery_type_id: parseInt(deliveryTypeId) } : {}),
           ...(priceCategoryId ? { product_price_category_id: parseInt(priceCategoryId) } : {})
         });
@@ -168,8 +181,8 @@ useEffect(() => {
         activeFilters.completion_date_asc = true;
       }
       if (paymentStatus) activeFilters.payment_status = paymentStatus;
-      if (commitToDate) activeFilters.commit_date = commitToDate;
-      if (completionDate) activeFilters.completion_date = completionDate;
+      Object.assign(activeFilters, buildDateRangeParams(commitDateFilter, "commit_date", "commit_from_date", "commit_to_date"));
+      Object.assign(activeFilters, buildDateRangeParams(completionDateFilter, "completion_date", "completion_from_date", "completion_to_date"));
       if (deliveryTypeId) activeFilters.delivery_type_id = parseInt(deliveryTypeId);
       if (priceCategoryId) activeFilters.product_price_category_id = parseInt(priceCategoryId);
 
@@ -194,19 +207,19 @@ useEffect(() => {
     orderStatus,
     completionDateAsc,
     paymentStatus,
-    commitToDate,
-    completionDate,
+    commitDateFilter,
+    completionDateFilter,
     deliveryTypeId,
     priceCategoryId
   ]);
 
-  const handleCommitToDate = (val: string) => {
-    setCommitToDate(val);
+  const handleCommitDateFilter = (val: DateFilterValue) => {
+    setCommitDateFilter(val);
     setCurrentPage(1);
   };
 
-  const handleCompletionDate = (val: string) => {
-    setCompletionDate(val);
+  const handleCompletionDateFilter = (val: DateFilterValue) => {
+    setCompletionDateFilter(val);
     setCurrentPage(1);
   };
 
@@ -221,8 +234,8 @@ useEffect(() => {
     setOrderStatus("");
     setCompletionDateAsc(false);
     setPaymentStatus("");
-    setCommitToDate("");
-    setCompletionDate("");
+    setCommitDateFilter(EMPTY_DATE_FILTER);
+    setCompletionDateFilter(EMPTY_DATE_FILTER);
     setDeliveryTypeId("");
     setPriceCategoryId("");
     setCurrentPage(1);
@@ -426,10 +439,10 @@ useEffect(() => {
         setSearch={setSearch}
         orderStatus={orderStatus}
         setOrderStatus={handleSetOrderStatus}
-        commitToDate={commitToDate}
-        setCommitToDate={handleCommitToDate}
-        completionDate={completionDate}
-        setCompletionDate={handleCompletionDate}
+        commitDateFilter={commitDateFilter}
+        setCommitDateFilter={handleCommitDateFilter}
+        completionDateFilter={completionDateFilter}
+        setCompletionDateFilter={handleCompletionDateFilter}
         kpiData={kpiData}
       />
 

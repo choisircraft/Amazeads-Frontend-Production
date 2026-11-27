@@ -3,6 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { Eye, X, Search } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, {
+  DateFilterValue,
+  buildDateRangeParams,
+} from "@/components/ui/DateFilterDropdown";
 import { getPMOrders, UserRole } from "@/modules/project-manager/services/managerOrder.service";
 import { useProjectManagerStore } from "@/store/projectManagerStore";
 import { CATEGORY_IDS } from "@/constants/categories";
@@ -113,9 +117,11 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
     return () => clearTimeout(timer);
   }, [search]);
 
-  const [completionDate, setCompletionDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [completionDateFilter, setCompletionDateFilter] = useState<DateFilterValue>({
+    date: new Date().toISOString().split("T")[0],
+    from: "",
+    to: "",
+  });
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [selectedTimelineProjectId, setSelectedTimelineProjectId] = useState<number | null>(null);
@@ -124,16 +130,23 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
+      const dateParams = buildDateRangeParams(
+        completionDateFilter,
+        "completion_date",
+        "completion_from_date",
+        "completion_to_date"
+      );
       const data = await getPMOrders(
         currentPage,
         5,
         "",
         "",
-        completionDate,
+        undefined,
         role,
         activeCategoryId,
         undefined,
-        debouncedSearch.trim() || undefined
+        debouncedSearch.trim() || undefined,
+        dateParams
       );
       const items = data.items || [];
       setOrders(items);
@@ -157,9 +170,12 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
 
   useEffect(() => {
     fetchOrders();
-  }, [currentPage, completionDate, selectedCategory, debouncedSearch]);
+  }, [currentPage, completionDateFilter, selectedCategory, debouncedSearch]);
 
-  const handleCompletionDate = (val: string) => { setCompletionDate(val); setCurrentPage(1); };
+  const handleCompletionDateFilter = (val: DateFilterValue) => {
+    setCompletionDateFilter(val);
+    setCurrentPage(1);
+  };
 
   return (
     <div className={styles.container}>
@@ -203,26 +219,12 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
 
         <div className="w-px h-4 bg-slate-200" />
 
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
-            Completion Date:
-          </span>
-          <div className="relative flex items-center">
-            <input
-              type="date"
-              value={completionDate}
-              onChange={(e) => handleCompletionDate(e.target.value)}
-              className="border-none outline-none text-xs text-slate-600 bg-transparent cursor-pointer"
-              style={{ paddingRight: completionDate ? "18px" : "0" }}
-            />
-            {completionDate && (
-              <button type="button" onClick={() => handleCompletionDate("")}
-                className="absolute right-0 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none p-0">
-                <X size={11} />
-              </button>
-            )}
-          </div>
-        </div>
+        <DateFilterDropdown
+          label="Completion Date"
+          value={completionDateFilter}
+          onChange={handleCompletionDateFilter}
+          badgeClassName="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
+        />
       </div>
 
       <div className={styles.tableCard}>

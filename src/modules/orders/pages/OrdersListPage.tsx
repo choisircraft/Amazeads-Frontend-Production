@@ -3,6 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { Eye, ShoppingBag, Activity, Package, Truck, CheckCircle2, X, FileDown, Loader2, Search, Edit2 } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import DateFilterDropdown, {
+  DateFilterValue,
+  EMPTY_DATE_FILTER,
+  buildDateRangeParams,
+} from "@/components/ui/DateFilterDropdown";
 import { getPMOrders, getProjectManagerOrderStatus, UserRole } from "@/modules/project-manager/services/managerOrder.service";
 import { useProjectManagerStore } from "@/store/projectManagerStore";
 import { CATEGORY_IDS } from "@/constants/categories";
@@ -129,8 +134,8 @@ export function OrdersListPage({ role = "project-manager" }: { role?: UserRole }
 
   // 🌟 Filters
   const [activeTab, setActiveTab] = useState("Ongoing");
-  const [commitToDate, setCommitToDate] = useState("");
-  const [completionDate, setCompletionDate] = useState("");
+  const [commitDateFilter, setCommitDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
+  const [completionDateFilter, setCompletionDateFilter] = useState<DateFilterValue>(EMPTY_DATE_FILTER);
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -166,16 +171,21 @@ export function OrdersListPage({ role = "project-manager" }: { role?: UserRole }
     setIsLoading(true);
     try {
       fetchKpis();
+      const extraDateParams = {
+        ...buildDateRangeParams(commitDateFilter, "commit_date", "commit_from_date", "commit_to_date"),
+        ...buildDateRangeParams(completionDateFilter, "completion_date", "completion_from_date", "completion_to_date"),
+      };
       const data = await getPMOrders(
         currentPage,
         5,
         activeTab,
-        commitToDate,
-        completionDate,
+        undefined,
+        undefined,
         role,
         activeCategoryId,
         undefined,
-        debouncedSearch.trim() || undefined
+        debouncedSearch.trim() || undefined,
+        extraDateParams
       );
       const items = data.items || [];
       setOrders(items);
@@ -199,11 +209,11 @@ export function OrdersListPage({ role = "project-manager" }: { role?: UserRole }
 
   useEffect(() => {
     fetchAllOrders();
-  }, [currentPage, activeTab, commitToDate, completionDate, selectedCategory, debouncedSearch]);
+  }, [currentPage, activeTab, commitDateFilter, completionDateFilter, selectedCategory, debouncedSearch]);
 
   const handleTabChange = (tab: string) => { setActiveTab(tab); setCurrentPage(1); };
-  const handleCommitToDate = (val: string) => { setCommitToDate(val); setCurrentPage(1); };
-  const handleCompletionDate = (val: string) => { setCompletionDate(val); setCurrentPage(1); };
+  const handleCommitDateFilter = (val: DateFilterValue) => { setCommitDateFilter(val); setCurrentPage(1); };
+  const handleCompletionDateFilter = (val: DateFilterValue) => { setCompletionDateFilter(val); setCurrentPage(1); };
 
   return (
     <div className={styles.container}>
@@ -409,51 +419,23 @@ export function OrdersListPage({ role = "project-manager" }: { role?: UserRole }
         <div className="w-px h-4 bg-slate-200" />
 
         {/* Commit Date */}
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
-            Commit:
-          </span>
-          <div className="relative flex items-center">
-            <input
-              type="date"
-              value={commitToDate}
-              onChange={(e) => handleCommitToDate(e.target.value)}
-              className="border-none outline-none text-xs text-slate-600 bg-transparent cursor-pointer"
-              style={{ paddingRight: commitToDate ? "18px" : "0" }}
-            />
-            {commitToDate && (
-              <button type="button" onClick={() => handleCommitToDate("")}
-                className="absolute right-0 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none p-0">
-                <X size={11} />
-              </button>
-            )}
-          </div>
-        </div>
+        <DateFilterDropdown
+          label="Commit"
+          value={commitDateFilter}
+          onChange={handleCommitDateFilter}
+          badgeClassName="inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
+        />
 
         {/* Divider */}
         <div className="w-px h-4 bg-slate-200" />
 
         {/* Completion Date */}
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
-            Completion Date:
-          </span>
-          <div className="relative flex items-center">
-            <input
-              type="date"
-              value={completionDate}
-              onChange={(e) => handleCompletionDate(e.target.value)}
-              className="border-none outline-none text-xs text-slate-600 bg-transparent cursor-pointer"
-              style={{ paddingRight: completionDate ? "18px" : "0" }}
-            />
-            {completionDate && (
-              <button type="button" onClick={() => handleCompletionDate("")}
-                className="absolute right-0 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none p-0">
-                <X size={11} />
-              </button>
-            )}
-          </div>
-        </div>
+        <DateFilterDropdown
+          label="Completion Date"
+          value={completionDateFilter}
+          onChange={handleCompletionDateFilter}
+          badgeClassName="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
+        />
       </div>
 
       <div className={styles.tableCard}>
