@@ -231,7 +231,13 @@ export default function DesignApprovalPage() {
               ) : (
                 pendingList.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                    <td style={{ fontWeight: 700 }}>{item.order_number || `Order #${item.order_id}`}</td>
+                    <td style={{ fontWeight: 700 }}>
+                      {item.order_number
+                        ? String(item.order_number).startsWith("#")
+                          ? item.order_number
+                          : `#${item.order_number}`
+                        : `#${item.order_id}`}
+                    </td>
                     <td style={{ fontWeight: 700 }}>{item.customer_name}</td>
                     <td
                       style={{

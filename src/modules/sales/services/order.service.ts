@@ -18,6 +18,12 @@ export async function getOrdersList(filters?: any): Promise<OrderListResponse> {
   return response.data;
 }
 
+// 1b. Get Orders List With Nested Project Departments
+export async function getOrdersListWithDepartments(filters?: any): Promise<OrderListResponse> {
+  const response = await api.get("/sales/orders/list_orders_with_departments", { params: filters });
+  return response.data;
+}
+
 // 2. Get Order or Quotation Details by ID
 export async function getOrderById(id: number, role: string = "sales"): Promise<any> {
   const roleSlug = getRoleSlug(role || "sales");

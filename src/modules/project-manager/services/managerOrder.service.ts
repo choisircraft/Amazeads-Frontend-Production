@@ -3,6 +3,30 @@ import api from "@/lib/axios";
 // ─── Shared Roles Typings ──────────────────────────────────────────────────────
 export type UserRole = "admin" | "manager" | "project-manager" | "sales";
 
+function buildPMOrdersParams(
+  page: number = 1,
+  pageSize: number = 5,
+  orderStatus?: string,
+  commitToDate?: string,
+  completionDate?: string,
+  categoryId?: number,
+  hasOrderNumber?: boolean,
+  search?: string,
+  extraParams?: Record<string, any>
+): Record<string, any> {
+  const params: Record<string, any> = { page, page_size: pageSize };
+  if (hasOrderNumber !== undefined) {
+    params.has_order_number = hasOrderNumber;
+  }
+  if (orderStatus) params.order_status = orderStatus;
+  if (commitToDate) params.commit_to_date = commitToDate;
+  if (completionDate) params.completion_date = completionDate;
+  if (categoryId) params.category_id = categoryId;
+  if (search) params.search = search;
+  if (extraParams) Object.assign(params, extraParams);
+  return params;
+}
+
 // 1. പ്രോജക്റ്റ് മാനേജർ ഓർഡറുകൾ ഫെച്ച് ചെയ്യുന്നു (Ongoing Orders)
 export async function getPMOrders(
   page: number = 1,
@@ -16,17 +40,46 @@ export async function getPMOrders(
   search?: string,
   extraParams?: Record<string, any>
 ): Promise<any> {
-  const params: any = { page, page_size: pageSize };
-  if (hasOrderNumber !== undefined) {
-    params.has_order_number = hasOrderNumber;
-  }
-  if (orderStatus) params.order_status = orderStatus;
-  if (commitToDate) params.commit_to_date = commitToDate;
-  if (completionDate) params.completion_date = completionDate;
-  if (categoryId) params.category_id = categoryId;
-  if (search) params.search = search;
-  if (extraParams) Object.assign(params, extraParams);
+  const params = buildPMOrdersParams(
+    page,
+    pageSize,
+    orderStatus,
+    commitToDate,
+    completionDate,
+    categoryId,
+    hasOrderNumber,
+    search,
+    extraParams
+  );
   const response = await api.get(`/${role}/orders`, { params });
+  return response.data;
+}
+
+// 1b. Fetch orders along with nested project department progress statuses
+export async function getPMOrdersWithDepartments(
+  page: number = 1,
+  pageSize: number = 5,
+  orderStatus?: string,
+  commitToDate?: string,
+  completionDate?: string,
+  role: UserRole = "project-manager",
+  categoryId?: number,
+  hasOrderNumber?: boolean,
+  search?: string,
+  extraParams?: Record<string, any>
+): Promise<any> {
+  const params = buildPMOrdersParams(
+    page,
+    pageSize,
+    orderStatus,
+    commitToDate,
+    completionDate,
+    categoryId,
+    hasOrderNumber,
+    search,
+    extraParams
+  );
+  const response = await api.get(`/${role}/orders/list_orders_with_departments`, { params });
   return response.data;
 }
 

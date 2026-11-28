@@ -9,8 +9,9 @@ import DateFilterDropdown, {
     buildDateRangeParams,
 } from "@/components/ui/DateFilterDropdown";
 import { OrderItemResponse } from "../types";
-import { getOrdersList } from "../services/order.service";
+import { getOrdersListWithDepartments } from "../services/order.service";
 import ViewOrderModal from "../components/ViewOrderModal";
+import ProjectProgressCell from "@/modules/projects/components/ProjectProgressCell";
 import ProjectProgressTimelineDropdown from "../../project-manager/components/ProjectProgressTimelineDropdown";
 import { useSalesStore } from "@/store/salesStore";
 import { CATEGORY_IDS } from "@/constants/categories";
@@ -80,7 +81,7 @@ export default function OrderDispatchPage() {
                 )
             );
 
-            const data = await getOrdersList(activeFilters);
+            const data = await getOrdersListWithDepartments(activeFilters);
             setOrders(data.items || []);
             setTotalPages(data.pagination?.total_pages || 1);
             setTotalCount(data.pagination?.total_count || 0);
@@ -198,6 +199,7 @@ export default function OrderDispatchPage() {
                                 <th style={{ width: "130px" }}>CUSTOMER</th>
                                 <th>PRODUCT</th>
                                 <th style={{ width: "45px", textAlign: "center" }}>QTY</th>
+                                <th style={{ width: "135px", minWidth: "130px", textAlign: "center" }}>PROGRESS</th>
                                 <th style={{ width: "95px" }}>COMMIT DATE</th>
                                 <th style={{ width: "100px" }}>COMPLETION DATE</th>
                                 <th style={{ width: "100px" }}>ACCOUNT</th>
@@ -210,13 +212,13 @@ export default function OrderDispatchPage() {
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={11} style={{ textAlign: "center", padding: "20px" }}>
+                                    <td colSpan={12} style={{ textAlign: "center", padding: "20px" }}>
                                         Loading orders to dispatch...
                                     </td>
                                 </tr>
                             ) : orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={11} style={{ textAlign: "center", padding: "24px" }}>
+                                    <td colSpan={12} style={{ textAlign: "center", padding: "24px" }}>
                                         No sales orders to dispatch for the selected date.
                                     </td>
                                 </tr>
@@ -278,6 +280,8 @@ export default function OrderDispatchPage() {
                                                         <td style={{ textAlign: "center", color: "#64748b" }}>
                                                             {proj ? proj.quantity : "—"}
                                                         </td>
+
+                                                        <ProjectProgressCell departments={proj?.departments} />
 
                                                         {isFirstRow && (
                                                             <>

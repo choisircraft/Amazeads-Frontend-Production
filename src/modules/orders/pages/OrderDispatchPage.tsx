@@ -7,10 +7,11 @@ import DateFilterDropdown, {
   DateFilterValue,
   buildDateRangeParams,
 } from "@/components/ui/DateFilterDropdown";
-import { getPMOrders, UserRole } from "@/modules/project-manager/services/managerOrder.service";
+import { getPMOrdersWithDepartments, UserRole } from "@/modules/project-manager/services/managerOrder.service";
 import { useProjectManagerStore } from "@/store/projectManagerStore";
 import { CATEGORY_IDS } from "@/constants/categories";
 import ViewOrderModal from "@/modules/sales/components/ViewOrderModal";
+import ProjectProgressCell from "@/modules/projects/components/ProjectProgressCell";
 import ProjectProgressTimelineDropdown from "@/modules/project-manager/components/ProjectProgressTimelineDropdown";
 import styles from "@/modules/project-manager/components/PMOrderComponents.module.css";
 
@@ -136,7 +137,7 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
         "completion_from_date",
         "completion_to_date"
       );
-      const data = await getPMOrders(
+      const data = await getPMOrdersWithDepartments(
         currentPage,
         5,
         "",
@@ -236,6 +237,7 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
                 <th style={{ width: "120px" }}>CUSTOMER</th>
                 <th>PRODUCT</th>
                 <th style={{ width: "45px", textAlign: "center" }}>QTY</th>
+                <th style={{ width: "135px", minWidth: "130px", textAlign: "center" }}>PROGRESS</th>
                 <th style={{ width: "90px" }}>TOTAL</th>
                 <th style={{ width: "100px" }}>COMPLETION DATE</th>
                 <th style={{ width: "100px" }}>CREATED BY</th>
@@ -245,9 +247,9 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>Loading orders to dispatch...</td></tr>
+                <tr><td colSpan={10} style={{ textAlign: "center", padding: "20px" }}>Loading orders to dispatch...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>No orders scheduled for this date.</td></tr>
+                <tr><td colSpan={10} style={{ textAlign: "center", padding: "24px" }}>No orders scheduled for this date.</td></tr>
               ) : (
                 orders.map((order) => {
                   const projectsList = order.projects && order.projects.length > 0 ? order.projects : [null];
@@ -306,6 +308,8 @@ export function OrderDispatchPage({ role = "project-manager" }: { role?: UserRol
                             <td style={{ textAlign: "center", color: "#64748b" }}>
                               {proj ? proj.quantity : "—"}
                             </td>
+
+                            <ProjectProgressCell departments={proj?.departments} />
 
                             {isFirstRow && (
                               <>
